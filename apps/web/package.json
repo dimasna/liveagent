@@ -1,0 +1,39 @@
+{
+  "name": "@liveagent/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3005 --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.12.0",
+    "@hookform/resolvers": "^4.1.0",
+    "@liveagent/db": "workspace:*",
+    "@liveagent/shared": "workspace:*",
+    "@liveagent/ui": "workspace:*",
+    "@tanstack/react-query": "^5.65.0",
+    "date-fns": "^4.1.0",
+    "jotai": "^2.12.5",
+    "lucide-react": "^0.475.0",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.0",
+    "recharts": "^2.15.4",
+    "sonner": "^2.0.6",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@liveagent/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.0.8",
+    "typescript": "^5.7.3"
+  }
+}

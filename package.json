@@ -1,0 +1,21 @@
+{
+  "name": "liveagent",
+  "private": true,
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "check-types": "turbo check-types",
+    "db:generate": "turbo db:generate",
+    "db:push": "turbo db:push",
+    "db:migrate": "turbo db:migrate",
+    "db:studio": "turbo db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.2"
+  }
+}

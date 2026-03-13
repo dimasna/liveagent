@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Organization subscription / plan
+model Subscription {
+  id        String   @id @default(cuid())
+  orgId     String   @unique
+  plan      Plan     @default(FREE)
+  status    SubscriptionStatus @default(ACTIVE)
+
+  // Billing provider IDs
+  customerId     String?
+  subscriptionId String?
+
+  // Limits
+  maxAgents       Int @default(1)
+  maxMinutesMonth Int @default(100)
+
+  // Onboarding
+  onboardingCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Plan {
+  FREE
+  STARTER
+  GROWTH
+  SCALE
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+// Voice agent configuration
+model Agent {
+  id    String @id @default(cuid())
+  orgId String
+  name  String
+
+  // Agent config
+  instruction    String @default("")
+  greeting       String @default("Hello! How can I help you with your reservation today?")
+  voice          String @default("Puck") // Gemini voice preset
+  model          String @default("gemini-live-2.5-flash-native-audio")
+  language       String @default("en-US")
+
+  // Phone number (provisioned)
+  phoneNumber String?
+
+  // Google Calendar integration
+  calendarId            String?
+  calendarAccessToken   String?
+  calendarRefreshToken  String?
+  calendarTokenExpiry   DateTime?
+
+  // Business info for the agent
+  businessName    String @default("")
+  businessType    String @default("restaurant") // restaurant, salon, clinic, etc.
+  timezone        String @default("America/New_York")
+  operatingHours  Json?  // { mon: { open: "09:00", close: "17:00" }, ... }
+  bookingDuration Int    @default(60) // default slot duration in minutes
+  maxAdvanceDays  Int    @default(30) // how far ahead to allow booking
+
+  status AgentStatus @default(ACTIVE)
+
+  // Relations
+  conversations Conversation[]
+  callLogs      CallLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+enum AgentStatus {
+  ACTIVE
+  PAUSED
+  PROVISIONING
+  FAILED
+}
+
+// A phone call / voice session
+model Conversation {
+  id      String @id @default(cuid())
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  // Caller info
+  callerPhone String?
+  callerName  String?
+  callerEmail String?
+
+  // Session
+  sessionId String @unique
+  status    ConversationStatus @default(IN_PROGRESS)
+
+  // Outcome
+  bookingMade   Boolean  @default(false)
+  bookingStart  DateTime?
+  bookingEnd    DateTime?
+  calendarEventId String?
+  summary       String?
+
+  // Transcript
+  messages Message[]
+
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+
+  @@index([agentId])
+  @@index([status])
+}
+
+enum ConversationStatus {
+  IN_PROGRESS
+  COMPLETED
+  MISSED
+  FAILED
+}
+
+// Individual message in a conversation
+model Message {
+  id             String @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role    MessageRole
+  content String
+  // Audio transcript metadata
+  audioUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+// Call log for analytics
+model CallLog {
+  id      String @id @default(cuid())
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  callerPhone   String?
+  durationSecs  Int      @default(0)
+  outcome       CallOutcome
+  bookingMade   Boolean  @default(false)
+
+  startedAt DateTime @default(now())
+
+  @@index([agentId, startedAt])
+}
+
+enum CallOutcome {
+  BOOKING_CREATED
+  BOOKING_RESCHEDULED
+  BOOKING_CANCELED
+  INQUIRY_ONLY
+  MISSED
+  FAILED
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@liveagent/widget",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:embed": "esbuild embed/widget.ts --bundle --format=iife --outfile=public/widget.js --minify",
+    "dev": "pnpm build:embed && next dev --turbopack --port 3006",
+    "build": "pnpm build:embed && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@liveagent/shared": "workspace:*",
+    "next": "^15.2.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@liveagent/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.3"
+  }
+}
