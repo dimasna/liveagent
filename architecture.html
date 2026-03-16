@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiveAgent Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0f1e;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 1rem;
+      color: #94a3b8;
+      margin-bottom: 36px;
+    }
+    .mermaid {
+      width: 100%;
+      max-width: 1100px;
+    }
+    .legend {
+      margin-top: 32px;
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+    .footer {
+      margin-top: 36px;
+      font-size: 0.8rem;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <h1>LiveAgent &mdash; Architecture</h1>
+  <p class="subtitle">AI-powered voice booking agent &bull; Built on Google Cloud</p>
+
+  <div class="mermaid">
+flowchart TB
+  subgraph USERS["&nbsp;&nbsp;Users&nbsp;&nbsp;"]
+    direction LR
+    BIZ["<b>Business Owner</b><br/>Dashboard"]
+    CALLER["<b>Customer</b><br/>Voice Widget / Phone"]
+  end
+
+  subgraph GCP_RUN["&nbsp;&nbsp;Google Cloud Run&nbsp;&nbsp;"]
+    direction TB
+    subgraph WEB_SVC["&nbsp;&nbsp;Web Service &mdash; Next.js 15&nbsp;&nbsp;"]
+      direction TB
+      DASH["Dashboard UI<br/><i>React 19 &bull; TanStack Query</i>"]
+      API["REST API Routes<br/><i>/api/agents &bull; /api/conversations<br/>/api/workspace &bull; /api/auth</i>"]
+      LIB["Core Logic<br/><i>Agent config &bull; Analytics<br/>Calendar OAuth &bull; Session auth</i>"]
+      DASH --> API
+      API --> LIB
+    end
+
+    subgraph AGENT_SVC["&nbsp;&nbsp;Agent Service &mdash; Fastify 5&nbsp;&nbsp;"]
+      direction TB
+      WS["WebSocket Server<br/><i>/ws/voice &bull; Bidirectional audio</i>"]
+      VS["VoiceSession<br/><i>PCM 16kHz streaming<br/>VAD &bull; Interruption handling</i>"]
+      TOOLS["Booking Tools<br/><i>check_availability &bull; create_booking<br/>reschedule &bull; cancel &bull; invite</i>"]
+      WS --> VS
+      VS --> TOOLS
+    end
+
+    subgraph WIDGET_SVC["&nbsp;&nbsp;Widget Service &mdash; Next.js 15&nbsp;&nbsp;"]
+      direction TB
+      EMBED["Embed Script<br/><i>widget.js &bull; esbuild IIFE</i>"]
+      VOICE_UI["Voice Interface<br/><i>iframe &bull; Web Audio API<br/>Waveform &bull; Transcript</i>"]
+      EMBED --> VOICE_UI
+    end
+  end
+
+  subgraph GEMINI["&nbsp;&nbsp;Google Gemini &mdash; @google/genai SDK&nbsp;&nbsp;"]
+    direction LR
+    LIVE["Gemini 2.5 Flash<br/><i>Live API &bull; Native Audio</i>"]
+    FC["Function Calling<br/><i>Tool declarations</i>"]
+    GENAI_SDK["@google/genai<br/><i>Research &bull; Voice Preview<br/>Live Session streaming</i>"]
+    LIVE <--> FC
+    GENAI_SDK --> LIVE
+  end
+
+  subgraph DATA["&nbsp;&nbsp;Data Layer&nbsp;&nbsp;"]
+    direction LR
+    PG[("Cloud SQL<br/><i>PostgreSQL 15</i>")]
+    PRISMA["Prisma ORM<br/><i>@liveagent/db</i>"]
+    PRISMA --> PG
+  end
+
+  subgraph AUTH["&nbsp;&nbsp;Authentication&nbsp;&nbsp;"]
+    direction LR
+    SESSION["iron-session<br/><i>Encrypted cookies</i>"]
+    BCRYPT["bcryptjs<br/><i>Password hashing</i>"]
+  end
+
+  subgraph GOOGLE["&nbsp;&nbsp;Google Services&nbsp;&nbsp;"]
+    direction LR
+    GCAL["Google Calendar<br/><i>Bookings &bull; Invites</i>"]
+    PLACES["Google Places<br/><i>Location Search</i>"]
+  end
+
+  BIZ --> DASH
+  CALLER --> EMBED
+  VOICE_UI -- "WebSocket<br/>audio stream" --> WS
+  VS -- "bidirectional<br/>audio + tools" --> LIVE
+  API -- "research<br/>voice preview" --> GENAI_SDK
+  TOOLS -- "create/query<br/>events" --> GCAL
+  LIB --> PRISMA
+  AGENT_SVC --> PRISMA
+  LIB --> SESSION
+  LIB --> BCRYPT
+  LIB --> PLACES
+
+  classDef gcpBlue fill:#4285F4,stroke:#3367d6,color:#fff,font-weight:bold
+  classDef gemini fill:#34A853,stroke:#2d8e47,color:#fff,font-weight:bold
+  classDef service fill:#1e293b,stroke:#334155,color:#e2e8f0
+  classDef data fill:#0f766e,stroke:#0d9488,color:#fff,font-weight:bold
+  classDef user fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0,font-weight:bold
+  classDef google fill:#FBBC05,stroke:#e0a800,color:#1a1a1a,font-weight:bold
+  classDef auth fill:#1e3a5f,stroke:#6366f1,color:#e2e8f0
+
+  class WEB_SVC,AGENT_SVC,WIDGET_SVC gcpBlue
+  class GEMINI,LIVE,FC,GENAI_SDK gemini
+  class DASH,API,LIB,WS,VS,TOOLS,EMBED,VOICE_UI service
+  class PG,PRISMA data
+  class BIZ,CALLER user
+  class GCAL,PLACES google
+  class SESSION,BCRYPT auth
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4285F4"></div>Cloud Run Services</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#34A853"></div>Gemini Live API</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FBBC05"></div>Google Services</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0f766e"></div>Cloud SQL Database</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1e3a5f;border:1px solid #6366f1"></div>Authentication</div>
+  </div>
+
+  <p class="footer">Monorepo &bull; Turborepo &bull; pnpm &bull; TypeScript &bull; Terraform IaC</p>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#4285F4',
+        primaryTextColor: '#e2e8f0',
+        primaryBorderColor: '#334155',
+        lineColor: '#64748b',
+        secondaryColor: '#1e293b',
+        tertiaryColor: '#0f172a',
+        fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        fontSize: '14px',
+      },
+      flowchart: {
+        curve: 'basis',
+        padding: 20,
+        htmlLabels: true,
+        useMaxWidth: true,
+      },
+    });
+  </script>
+</body>
+</html>
