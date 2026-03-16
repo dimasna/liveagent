@@ -4,11 +4,14 @@ AI-powered voice booking agent platform. Businesses create voice agents that han
 
 ## Architecture
 
+![Architecture Diagram](architecture-diagram.png)
+
 ```
 apps/
   web/        → Next.js 15 dashboard & API (port 3005)
   agent/      → Fastify 5 voice agent server, Gemini Live API (port 8080)
   widget/     → Embeddable voice booking widget (port 3006)
+  call/       → WhatsApp-style direct call link app (port 3009)
 
 packages/
   db/         → Prisma schema + client (PostgreSQL)
@@ -18,8 +21,6 @@ packages/
   eslint-config/
 ```
 
-See `architecture.html` for a full visual diagram.
-
 ## Tech Stack
 
 | Layer | Technology |
@@ -27,7 +28,7 @@ See `architecture.html` for a full visual diagram.
 | Voice AI | Gemini 2.5 Flash Live API via `@google/genai` SDK |
 | Web | Next.js 15 (App Router), React 19, TanStack Query, Tailwind CSS 4 |
 | Agent | Fastify 5, WebSocket, `@google/genai` Live API streaming |
-| Widget | Next.js 15, Web Audio API, iframe embed |
+| Widget & Call App | Next.js 15, Web Audio API, PCM 16kHz streaming |
 | Database | PostgreSQL 15 via Prisma ORM |
 | Auth | iron-session (encrypted cookies) + bcryptjs |
 | Calendar | Google Calendar API via OAuth 2.0 |
@@ -128,6 +129,7 @@ pnpm dev
 | Web dashboard | http://localhost:3005 |
 | Agent server | http://localhost:8080 |
 | Widget | http://localhost:3006 |
+| Call app | http://localhost:3009 |
 
 Run individual apps:
 
@@ -135,6 +137,7 @@ Run individual apps:
 pnpm --filter @liveagent/web dev      # Web dashboard
 pnpm --filter @liveagent/agent dev     # Agent server
 pnpm --filter @liveagent/widget dev    # Widget
+pnpm --filter @liveagent/call dev      # Call app
 ```
 
 ## Database
@@ -152,7 +155,8 @@ pnpm db:studio     # Open Prisma Studio GUI
 2. **Connect Google Calendar** — OAuth flow links your calendar for real-time availability checking and booking
 3. **Voice calls** — The agent service uses Gemini Live API (`@google/genai`) for real-time bidirectional audio streaming. Callers speak naturally; the AI checks availability and creates bookings via function calling (check_availability, create_booking, reschedule, cancel)
 4. **Widget** — Embed a voice booking widget on any website with a single `<script>` tag
-5. **Playground** — Test and customize the widget appearance and agent behavior in the dashboard
+5. **Call link** — Share a direct call URL (e.g., `call.liveagent.dev/joes-barbershop`) via social bios, QR codes, or SMS
+6. **Playground** — Test and customize the widget appearance and agent behavior in the dashboard
 
 ## Auth
 
@@ -206,10 +210,10 @@ terraform apply
 That's it. Terraform will:
 1. Enable all required GCP APIs
 2. Create Artifact Registry repository
-3. Build all 3 Docker images in Cloud Build (no local Docker needed)
+3. Build all 4 Docker images in Cloud Build (no local Docker needed)
 4. Create Cloud SQL PostgreSQL database
 5. Run Prisma schema push via Cloud SQL Proxy (automatic)
-6. Deploy 3 Cloud Run services (web, agent, widget)
+6. Deploy 4 Cloud Run services (web, agent, widget, call)
 7. Configure service accounts and IAM
 
 ### View service URLs
@@ -219,6 +223,7 @@ cd infra
 terraform output web_url      # Dashboard
 terraform output agent_url    # Voice agent WebSocket
 terraform output widget_url   # Embeddable widget
+terraform output call_url     # Direct call link app
 ```
 
 ### Demo agent
@@ -232,3 +237,7 @@ To show a live voice widget on the landing page:
 ### Redeploying
 
 After code changes, just run `terraform apply` again. It rebuilds all images in Cloud Build and updates the Cloud Run services.
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
