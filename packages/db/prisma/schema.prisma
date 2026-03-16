@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -7,41 +8,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Organization subscription / plan
-model Subscription {
+// User authentication
+model User {
   id        String   @id @default(cuid())
-  orgId     String   @unique
-  plan      Plan     @default(FREE)
-  status    SubscriptionStatus @default(ACTIVE)
-
-  // Billing provider IDs
-  customerId     String?
-  subscriptionId String?
-
-  // Limits
-  maxAgents       Int @default(1)
-  maxMinutesMonth Int @default(100)
-
-  // Onboarding
-  onboardingCompleted Boolean @default(false)
-
+  username  String   @unique
+  password  String   // bcrypt hash
+  orgId     String   @default("default")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum Plan {
-  FREE
-  STARTER
-  GROWTH
-  SCALE
-  ENTERPRISE
-}
+// Organization workspace settings
+model Subscription {
+  id        String   @id @default(cuid())
+  orgId     String   @unique
 
-enum SubscriptionStatus {
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  TRIALING
+  // Onboarding
+  onboardingCompleted Boolean @default(false)
+
+  // Google Calendar integration (workspace-level)
+  googleAccessToken   String?
+  googleRefreshToken  String?
+  googleTokenExpiry   DateTime?
+  googleEmail         String?   // Google account email for display
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Voice agent configuration
@@ -74,11 +66,21 @@ model Agent {
   bookingDuration Int    @default(60) // default slot duration in minutes
   maxAdvanceDays  Int    @default(30) // how far ahead to allow booking
 
+  // Resource capacity
+  capacityType  String @default("slots") // "tables", "rooms", "chairs", "courts", "slots", "units", "bays"
+  capacityCount Int    @default(0)       // total number of resources
+
+  // Widget customization
+  widgetColor    String @default("#0a0a0a")
+  widgetBgColor  String @default("#0a0a0a")
+  widgetPosition String @default("bottom-right") // "bottom-right" | "bottom-left"
+
   status AgentStatus @default(ACTIVE)
 
   // Relations
   conversations Conversation[]
   callLogs      CallLog[]
+  resources     Resource[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,3 +181,25 @@ enum CallOutcome {
   MISSED
   FAILED
 }
+
+// Bookable resource (table, room, chair, etc.)
+model Resource {
+  id      String @id @default(cuid())
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  name     String         // "Table 1", "Room A", "Chair 3"
+  type     String         // "table", "room", "chair", "court", "slot", "unit", "bay"
+  capacity Int            @default(1) // e.g., 4 seats per table
+  status   ResourceStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
+  @@index([agentId])
+}
+
+enum ResourceStatus {
+  ACTIVE
+  INACTIVE
+}
+

@@ -9,7 +9,11 @@
     ".": "./src/index.ts",
     "./*": "./src/*.ts"
   },
+  "scripts": {
+    "build": "tsc --noCheck"
+  },
   "devDependencies": {
-    "@liveagent/typescript-config": "workspace:*"
+    "@liveagent/typescript-config": "workspace:*",
+    "typescript": "^5.7.3"
   }
 }
