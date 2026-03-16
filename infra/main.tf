@@ -52,12 +52,13 @@ locals {
   registry   = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.repo.repository_id}"
   source_dir = "${path.module}/.."
 
-  # Domain URLs — custom domains when set, fall back to Cloud Run URLs
+  # Domain URLs — set var.domain for cross-service connectivity in production.
+  # Without a domain, URLs are empty and services fall back to runtime defaults.
   has_domain   = var.domain != ""
-  app_url      = local.has_domain ? "https://${var.domain}" : google_cloud_run_v2_service.web.uri
-  agent_url    = local.has_domain ? "https://agent.${var.domain}" : google_cloud_run_v2_service.agent.uri
-  agent_ws_url = local.has_domain ? "wss://agent.${var.domain}" : replace(google_cloud_run_v2_service.agent.uri, "https://", "wss://")
-  widget_url   = local.has_domain ? "https://widget.${var.domain}" : google_cloud_run_v2_service.widget.uri
+  app_url      = local.has_domain ? "https://${var.domain}" : ""
+  agent_url    = local.has_domain ? "https://agent.${var.domain}" : ""
+  agent_ws_url = local.has_domain ? "wss://agent.${var.domain}" : ""
+  widget_url   = local.has_domain ? "https://widget.${var.domain}" : ""
 }
 
 # ---------- Cloud Build: build & push images ----------
