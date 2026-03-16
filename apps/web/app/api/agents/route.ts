@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       data: {
         orgId,
         name: body.name || "Booking Agent",
+        username: body.username || null,
         businessName: body.businessName || "",
         businessType: body.businessType || "restaurant",
         timezone: body.timezone || "America/New_York",

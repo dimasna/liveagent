@@ -35,6 +35,7 @@ export function VoiceWidget({ agentId, color = "#0a0a0a", bgColor = "#0a0a0a" }:
     transcript,
     bookingConfirmation,
     bookingPhase,
+    emailSent,
     error,
   } = useVoiceSession();
 
@@ -170,7 +171,7 @@ export function VoiceWidget({ agentId, color = "#0a0a0a", bgColor = "#0a0a0a" }:
 
         {/* Booking card (phased) */}
         {bookingPhase !== "idle" && (
-          <BookingCard phase={bookingPhase} booking={bookingConfirmation} />
+          <BookingCard phase={bookingPhase} booking={bookingConfirmation} emailSent={emailSent} />
         )}
       </div>
 
@@ -231,13 +232,16 @@ export function VoiceWidget({ agentId, color = "#0a0a0a", bgColor = "#0a0a0a" }:
 function BookingCard({
   phase,
   booking,
+  emailSent,
 }: {
   phase: BookingPhase;
   booking: BookingConfirmation | null;
+  emailSent: boolean;
 }) {
   const isConfirming = phase === "confirming";
   const isConfirmed = phase === "confirmed";
-  const hasSentEmail = isConfirmed && !!booking?.attendeeEmail;
+  const hasSentEmail = isConfirmed && emailSent;
+  const hasPendingEmail = isConfirmed && !!booking?.attendeeEmail && !emailSent;
 
   // Parse people count from summary
   const peopleMatch = booking?.summary?.match(/(\d+)\s*(?:people|person|guest|pax)/i);
@@ -320,14 +324,19 @@ function BookingCard({
             </div>
           )}
 
-          {/* Email sent */}
+          {/* Email — pending confirmation or sent */}
           {booking.attendeeEmail && (
             <div className="flex items-center gap-2">
-              <svg className="w-3.5 h-3.5 text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className={`w-3.5 h-3.5 shrink-0 ${hasPendingEmail ? "text-amber-400/50" : "text-green-400/50"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              <span className="text-green-300">{booking.attendeeEmail}</span>
+              <span className={hasPendingEmail ? "text-amber-300" : "text-green-300"}>
+                {booking.attendeeEmail}
+              </span>
+              {hasPendingEmail && (
+                <span className="text-[10px] text-amber-400/60">Confirm?</span>
+              )}
             </div>
           )}
         </div>

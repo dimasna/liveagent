@@ -89,7 +89,8 @@ type ServerMessage =
   | ServerErrorMessage
   | ServerBookingConfirming
   | ServerBookingConfirmed
-  | { type: "invite_sent"; email: unknown };
+  | { type: "invite_sent"; email: unknown }
+  | { type: "email_confirming"; email: unknown };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -380,6 +381,33 @@ export class VoiceSession {
       this.config.logger.info({ name, args: fc.args }, "Executing tool call");
 
       this.persistMessage("TOOL", JSON.stringify({ name, args: fc.args }));
+
+      // Handle confirm_email — display email on booking card for visual crosscheck
+      if (name === "confirm_email") {
+        const args = fc.args as Record<string, unknown> | undefined;
+        const email = args?.email as string | undefined;
+        this.config.logger.info({ email }, "Displaying email on booking card for confirmation");
+        if (email) {
+          this.sendToClient({ type: "email_confirming", email });
+        }
+        responses.push({
+          id: fc.id ?? name,
+          name,
+          response: {
+            success: true,
+            message: `Email "${email}" is now displayed on the booking card. Ask the caller to confirm it is correct before sending the invite.`,
+          } as Record<string, unknown>,
+        });
+        // Send response and continue — don't return early, let Gemini process it
+        if (this.liveSession && !this.closed) {
+          try {
+            this.liveSession.sendToolResponse({ functionResponses: responses });
+          } catch {
+            // ignore
+          }
+        }
+        return;
+      }
 
       // Handle end_call — wait for the model to finish speaking before closing
       if (name === "end_call") {

@@ -5,6 +5,7 @@ import { VoiceSelector } from "./voice-selector";
 
 interface AgentFormData {
   name: string;
+  username: string;
   businessName: string;
   businessType: string;
   timezone: string;
@@ -36,6 +37,29 @@ export function AgentForm({ data, onChange }: AgentFormProps) {
               onChange={(e) => update("name", e.target.value)}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
             />
+          </Field>
+          <Field label="Call Link Username">
+            <div className="flex items-center gap-0">
+              <span className="shrink-0 rounded-l-lg border border-r-0 border-input bg-muted px-3 py-2 text-sm text-muted-foreground">
+                /
+              </span>
+              <input
+                value={data.username}
+                onChange={(e) =>
+                  update(
+                    "username",
+                    e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]/g, "")
+                  )
+                }
+                placeholder="joes-barbershop"
+                className="w-full rounded-r-lg border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Unique URL for your call page. Only lowercase letters, numbers, and hyphens.
+            </p>
           </Field>
           <Field label="Business Name">
             <input

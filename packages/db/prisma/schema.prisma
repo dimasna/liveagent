@@ -38,9 +38,10 @@ model Subscription {
 
 // Voice agent configuration
 model Agent {
-  id    String @id @default(cuid())
-  orgId String
-  name  String
+  id       String  @id @default(cuid())
+  orgId    String
+  name     String
+  username String? @unique // URL-safe slug for call app link, e.g. "joes-barbershop"
 
   // Agent config
   instruction    String @default("")

@@ -62,6 +62,7 @@ locals {
   agent_url    = local.has_domain ? "https://agent.${var.domain}" : "https://liveagent-agent-${local.run_base}"
   agent_ws_url = local.has_domain ? "wss://agent.${var.domain}" : "wss://liveagent-agent-${local.run_base}"
   widget_url   = local.has_domain ? "https://widget.${var.domain}" : "https://liveagent-widget-${local.run_base}"
+  call_url     = local.has_domain ? "https://call.${var.domain}" : "https://liveagent-call-${local.run_base}"
 }
 
 # ---------- Cloud Build: build & push images ----------
@@ -131,6 +132,31 @@ resource "null_resource" "build_widget" {
         - name: gcr.io/cloud-builders/docker
           args: ['build', '--no-cache', '-f', 'apps/widget/Dockerfile', '-t', '${local.registry}/widget:latest', '.']
       images: ['${local.registry}/widget:latest']
+      options:
+        logging: CLOUD_LOGGING_ONLY
+      EOF
+    EOT
+  }
+
+  depends_on = [google_artifact_registry_repository.repo]
+}
+
+resource "null_resource" "build_call" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    working_dir = local.source_dir
+    command     = <<-EOT
+      gcloud builds submit \
+        --project ${var.project_id} \
+        --region ${var.region} \
+        --config /dev/stdin . <<'EOF'
+      steps:
+        - name: gcr.io/cloud-builders/docker
+          args: ['build', '--no-cache', '-f', 'apps/call/Dockerfile', '-t', '${local.registry}/call:latest', '.']
+      images: ['${local.registry}/call:latest']
       options:
         logging: CLOUD_LOGGING_ONLY
       EOF
@@ -351,6 +377,10 @@ resource "google_cloud_run_v2_service" "web" {
         value = local.widget_url
       }
       env {
+        name  = "NEXT_PUBLIC_CALL_URL"
+        value = local.call_url
+      }
+      env {
         name  = "NEXT_PUBLIC_DEMO_AGENT_ID"
         value = var.demo_agent_id
       }
@@ -500,6 +530,58 @@ resource "google_cloud_run_v2_service_iam_member" "widget_public" {
   member   = "allUsers"
 }
 
+# ---------- Cloud Run: call (voice call app) ----------
+resource "google_cloud_run_v2_service" "call" {
+  name     = "liveagent-call"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  template {
+    labels = { deployed_at = formatdate("YYYYMMDDhhmmss", timestamp()) }
+
+    service_account = google_service_account.cloudrun.email
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 3
+    }
+
+    containers {
+      image = "${local.registry}/call:latest"
+
+      ports {
+        container_port = 3000
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+      }
+
+      env {
+        name  = "NEXT_PUBLIC_AGENT_WS_URL"
+        value = local.agent_ws_url
+      }
+      env {
+        name  = "NEXT_PUBLIC_WEB_APP_URL"
+        value = local.app_url
+      }
+    }
+  }
+
+  depends_on = [google_project_service.apis, null_resource.build_call]
+}
+
+resource "google_cloud_run_v2_service_iam_member" "call_public" {
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.call.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 # ---------- Domain Mappings (optional, requires verified domain) ----------
 # These use create_before_destroy + ignore metadata changes to prevent
 # terraform from destroying and recreating them (which resets SSL certs).
@@ -561,4 +643,24 @@ resource "google_cloud_run_domain_mapping" "widget" {
   }
 
   depends_on = [google_cloud_run_v2_service.widget]
+}
+
+resource "google_cloud_run_domain_mapping" "call" {
+  count    = var.domain != "" ? 1 : 0
+  name     = "call.${var.domain}"
+  location = var.region
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.call.name
+  }
+
+  lifecycle {
+    ignore_changes = [metadata]
+  }
+
+  depends_on = [google_cloud_run_v2_service.call]
 }

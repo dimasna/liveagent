@@ -43,6 +43,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       where: { id, orgId },
       data: {
         name: body.name,
+        username: body.username || null,
         businessName: body.businessName,
         businessType: body.businessType,
         timezone: body.timezone,

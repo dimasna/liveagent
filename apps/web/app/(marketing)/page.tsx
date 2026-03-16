@@ -10,6 +10,9 @@ import {
   ZapIcon,
   GlobeIcon,
   BotIcon,
+  LinkIcon,
+  CodeIcon,
+  SmartphoneIcon,
   ScissorsIcon,
   UtensilsIcon,
   DumbbellIcon,
@@ -92,9 +95,9 @@ const howItWorks = [
   {
     step: "03",
     icon: GlobeIcon,
-    title: "Deploy the widget",
+    title: "Deploy anywhere",
     description:
-      "Add a single script tag to your website. Customers click to call and your agent handles the rest.",
+      "Embed a widget on your website or share a direct call link. Customers call your agent from any device.",
   },
 ];
 
@@ -208,14 +211,14 @@ export default function HomePage() {
 
               <AnimateOnScroll delay={100}>
                 <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-bold leading-[1.1] tracking-tight text-foreground mb-5">
-                  AI Voice Agents for{" "}
+                   Live Voice Agents for{" "}
                   <span className="text-muted-foreground">Reservations & Bookings</span>
                 </h1>
               </AnimateOnScroll>
 
               <AnimateOnScroll delay={200}>
                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-[440px]">
-                  Open-source AI voice agents that answer calls, check
+                  Open-source AI live voice agents that answer calls, check
                   availability, and book appointments — all synced with Google
                   Calendar.
                 </p>
@@ -242,18 +245,14 @@ export default function HomePage() {
 
             {/* Right — widget mockup (compact) */}
             <AnimateOnScroll delay={200}>
-              <div className="border border-border bg-background rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/30 max-w-[320px] md:ml-auto">
+              <div className="border border-border bg-white dark:bg-zinc-950 rounded-2xl shadow-xl shadow-black/8 dark:shadow-black/30 max-w-[320px] md:ml-auto">
                 <div className="flex flex-col items-center pt-8 pb-5 px-5">
                   {/* Waveform circle — smaller */}
                   <div className="relative mb-1">
                     <div
-                      className="absolute inset-0 rounded-full border-2 hero-ripple"
-                      style={{ borderColor: "rgba(34, 197, 94, 0.19)" }}
+                      className="absolute inset-0 rounded-full border-2 hero-ripple border-foreground/15"
                     />
-                    <div
-                      className="relative w-20 h-20 rounded-full flex items-center justify-center bg-green-500/5"
-                      style={{ boxShadow: "0 0 10px 2px rgba(34, 197, 94, 0.4)" }}
-                    >
+                    <div className="relative w-20 h-20 rounded-full flex items-center justify-center bg-foreground/5">
                       <div className="flex items-center gap-1">
                         {[
                           { height: 10, opacity: 0.35 },
@@ -264,11 +263,10 @@ export default function HomePage() {
                         ].map((bar, i) => (
                           <div
                             key={i}
-                            className="rounded-full hero-wave-bar"
+                            className="rounded-full hero-wave-bar bg-foreground"
                             style={{
                               width: 4,
                               height: bar.height,
-                              backgroundColor: "#22c55e",
                               opacity: bar.opacity * 0.8,
                             }}
                           />
@@ -315,7 +313,7 @@ export default function HomePage() {
                         <span className="text-green-700 dark:text-green-300">john@example.com</span>
                       </div>
                     </div>
-                    <p className="mt-2.5 pt-2 border-t border-green-500/10 text-[10px] text-green-600/40 dark:text-green-400/40">
+                    <p className="mt-2.5 pt-2 border-t border-green-500/10 text-[10px] text-green-600/50 dark:text-green-400/40">
                       #a1b2c3d4 · Calendar invite sent
                     </p>
                   </div>
@@ -324,10 +322,9 @@ export default function HomePage() {
                 {/* Bottom button — smaller */}
                 <div className="px-4 pb-4 pt-1 flex items-center justify-center">
                   <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#22c55e", boxShadow: "0 0 10px 2px rgba(34, 197, 94, 0.4)" }}
+                    className="w-11 h-11 rounded-full flex items-center justify-center bg-foreground shadow-[0_0_10px_2px_rgba(0,0,0,0.15)] dark:shadow-[0_0_10px_2px_rgba(34,197,94,0.4)]"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-background">
                       <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91" />
                       <line x1="1" y1="1" x2="23" y2="23" />
                     </svg>
@@ -342,7 +339,7 @@ export default function HomePage() {
       {/* Features */}
       <section id="features" className="max-w-[1160px] mx-auto px-6">
         <FrameBox corners="bottom" className="py-24 px-8">
-          <SectionBadge number="01 / 04" label="Features" sub="Core capabilities" />
+          <SectionBadge number="01 / 05" label="Features" sub="Core capabilities" />
 
           <AnimateOnScroll>
             <h2 className="text-4xl font-bold text-foreground tracking-tight mb-3">
@@ -418,14 +415,14 @@ export default function HomePage() {
                 <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3.5 py-3">
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center">
-                      <svg className="w-2.5 h-2.5 text-amber-400 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <svg className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400 animate-spin" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" opacity="0.3" />
                         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <span className="text-[12px] font-semibold text-amber-400">Confirming booking...</span>
+                    <span className="text-[12px] font-semibold text-amber-600 dark:text-amber-400">Confirming booking...</span>
                   </div>
-                  <div className="mt-2 pl-7 space-y-1 text-[11px] text-amber-300/60">
+                  <div className="mt-2 pl-7 space-y-1 text-[11px] text-amber-700/70 dark:text-amber-300/60">
                     <p>Checking availability for Sat 1:30 PM</p>
                     <p>Creating calendar event...</p>
                   </div>
@@ -439,34 +436,34 @@ export default function HomePage() {
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </div>
-                    <span className="text-[12px] font-semibold text-green-400">Confirmed &amp; Sent</span>
+                    <span className="text-[12px] font-semibold text-green-600 dark:text-green-400">Confirmed &amp; Sent</span>
                   </div>
                   <div className="pl-7 space-y-1.5 text-[11px]">
                     <div className="flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-3 h-3 text-green-600/50 dark:text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                         <line x1="16" y1="2" x2="16" y2="6" />
                         <line x1="8" y1="2" x2="8" y2="6" />
                         <line x1="3" y1="10" x2="21" y2="10" />
                       </svg>
-                      <span className="text-green-300">Sat, Mar 21, 1:30 – 2:00 PM</span>
+                      <span className="text-green-700 dark:text-green-300">Sat, Mar 21, 1:30 – 2:00 PM</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-3 h-3 text-green-600/50 dark:text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                       </svg>
-                      <span className="text-green-300">Haircut — Station 3</span>
+                      <span className="text-green-700 dark:text-green-300">Haircut — Station 3</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-3 h-3 text-green-600/50 dark:text-green-400/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                         <polyline points="22,6 12,13 2,6" />
                       </svg>
-                      <span className="text-green-300">john@example.com</span>
+                      <span className="text-green-700 dark:text-green-300">john@example.com</span>
                     </div>
                   </div>
-                  <p className="mt-2 pt-1.5 border-t border-green-500/10 text-[10px] text-green-400/40 pl-7">
+                  <p className="mt-2 pt-1.5 border-t border-green-500/10 text-[10px] text-green-600/50 dark:text-green-400/40 pl-7">
                     #a1b2c3d4 · Calendar invite sent
                   </p>
                 </div>
@@ -479,7 +476,7 @@ export default function HomePage() {
       {/* Stats */}
       <section className="max-w-[1160px] mx-auto px-6">
         <FrameBox corners="bottom" className="py-16 px-8">
-          <SectionBadge number="02 / 04" label="Performance" sub="Built to deliver" />
+          <SectionBadge number="02 / 05" label="Performance" sub="Built to deliver" />
 
           <AnimateOnScroll>
             <h2 className="text-4xl font-bold text-foreground tracking-tight mb-3">
@@ -557,10 +554,166 @@ export default function HomePage() {
         </FrameBox>
       </section>
 
+      {/* Deploy Everywhere */}
+      <section id="deploy" className="max-w-[1160px] mx-auto px-6">
+        <FrameBox corners="bottom" className="py-24 px-8">
+          <SectionBadge number="03 / 05" label="Deploy" sub="Two ways to go live" />
+
+          <AnimateOnScroll>
+            <h2 className="text-4xl font-bold text-foreground tracking-tight mb-3">
+              Deploy everywhere your customers are
+            </h2>
+            <p className="text-muted-foreground text-base mb-12 max-w-[600px]">
+              Embed a widget on your website or give customers a direct call link. Both options, zero friction.
+            </p>
+          </AnimateOnScroll>
+
+          <div className="grid md:grid-cols-2 border border-border">
+            {/* Option 1: Widget Embed */}
+            <AnimateOnScroll delay={100}>
+              <div className="h-full p-8 md:border-r border-b md:border-b-0 border-border">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground">
+                    <CodeIcon className="size-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-foreground font-semibold text-base">Website Widget</h3>
+                    <p className="text-muted-foreground text-xs">Embed on any site</p>
+                  </div>
+                </div>
+
+                {/* Code snippet */}
+                <div className="rounded-lg border border-border bg-muted/30 p-4 font-mono text-[12px] leading-[1.9] mb-5">
+                  <div className="flex gap-1.5 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-[#ff5f56]" />
+                    <span className="w-2 h-2 rounded-full bg-[#ffbd2e]" />
+                    <span className="w-2 h-2 rounded-full bg-[#27c93f]" />
+                  </div>
+                  <div><span className="text-muted-foreground/60">{`<!-- One script tag -->`}</span></div>
+                  <div><span className="text-[#7aa2f7]">{`<`}</span><span className="text-[#bb9af7]">script</span></div>
+                  <div>  <span className="text-[#e0af68]">src</span><span className="text-foreground/60">=</span><span className="text-[#9ece6a]">&quot;widget.js&quot;</span></div>
+                  <div>  <span className="text-[#e0af68]">data-agent-id</span><span className="text-foreground/60">=</span><span className="text-[#9ece6a]">&quot;your-id&quot;</span></div>
+                  <div><span className="text-[#7aa2f7]">{`/>`}</span></div>
+                </div>
+
+                <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Floating call button on your website
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Live transcript and booking cards
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Custom colors to match your brand
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+
+            {/* Option 2: Call Link */}
+            <AnimateOnScroll delay={200}>
+              <div className="h-full p-8">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground">
+                    <SmartphoneIcon className="size-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-foreground font-semibold text-base">Direct Call Link</h3>
+                    <p className="text-muted-foreground text-xs">Share a URL, start a call</p>
+                  </div>
+                </div>
+
+                {/* Call app mockup — phone frame */}
+                <div className="rounded-2xl border border-border bg-gradient-to-b from-[#1a1a2e] to-[#0a0a0a] overflow-hidden mb-5">
+                  <div className="flex flex-col items-center py-6 px-4">
+                    {/* Agent info */}
+                    <p className="text-[11px] text-gray-400">Joe&apos;s Barbershop</p>
+                    <p className="text-[13px] font-semibold text-white mt-0.5">Booking Agent</p>
+                    <p className="text-[11px] text-green-400 mt-1">01:23</p>
+
+                    {/* Waveform */}
+                    <div className="my-4 w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(59,130,246,0.08)" }}>
+                      <div className="flex items-center gap-[3px]">
+                        {[
+                          { height: 10, opacity: 0.35 },
+                          { height: 18, opacity: 0.55 },
+                          { height: 26, opacity: 1.0 },
+                          { height: 17, opacity: 0.55 },
+                          { height: 9, opacity: 0.35 },
+                        ].map((bar, i) => (
+                          <div
+                            key={i}
+                            className="rounded-full hero-wave-bar"
+                            style={{
+                              width: 4,
+                              height: bar.height,
+                              backgroundColor: "#3b82f6",
+                              opacity: bar.opacity * 0.8,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mini booking card */}
+                    <div className="w-full rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2.5">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <div className="w-4 h-4 rounded-full bg-green-500 text-white flex items-center justify-center">
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        </div>
+                        <span className="text-[10px] font-semibold text-green-400">Confirmed</span>
+                      </div>
+                      <div className="space-y-1 text-[10px] text-green-300/80 pl-5.5">
+                        <p>Sat, Mar 21, 1:30 PM</p>
+                        <p>Haircut — Station 3</p>
+                      </div>
+                    </div>
+
+                    {/* End call button */}
+                    <div className="mt-4">
+                      <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* URL bar */}
+                  <div className="border-t border-white/5 px-4 py-2 flex items-center gap-2">
+                    <LinkIcon className="size-3 text-gray-500" />
+                    <span className="text-[11px] text-gray-400 font-mono">call.liveagent.dev/<span className="text-white/70">joes-barbershop</span></span>
+                  </div>
+                </div>
+
+                <ul className="space-y-2.5 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Shareable link — no website needed
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Full-screen call UI on mobile
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                    Add to social bio, QR codes, or SMS
+                  </li>
+                </ul>
+              </div>
+            </AnimateOnScroll>
+          </div>
+        </FrameBox>
+      </section>
+
       {/* How It Works */}
       <section id="how-it-works" className="max-w-[1160px] mx-auto px-6">
         <FrameBox corners="bottom" className="py-24 px-8">
-          <SectionBadge number="03 / 04" label="Setup" sub="Three simple steps" />
+          <SectionBadge number="04 / 05" label="Setup" sub="Three simple steps" />
 
           <AnimateOnScroll>
             <h2 className="text-4xl font-bold text-foreground tracking-tight mb-3">
@@ -603,7 +756,7 @@ export default function HomePage() {
       {/* Business Types */}
       <section id="industries" className="max-w-[1160px] mx-auto px-6">
         <FrameBox corners="bottom" className="py-24 px-8">
-          <SectionBadge number="04 / 04" label="Industries" sub="Built for every business" />
+          <SectionBadge number="05 / 05" label="Industries" sub="Built for every business" />
 
           <AnimateOnScroll>
             <h2 className="text-4xl font-bold text-foreground tracking-tight mb-3">

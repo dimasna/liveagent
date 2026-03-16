@@ -14,8 +14,9 @@ function isPublicRoute(pathname: string): boolean {
   if (pathname === "/privacy" || pathname === "/terms" || pathname === "/about") return true;
   if (pathname.startsWith("/privacy/") || pathname.startsWith("/terms/") || pathname.startsWith("/about/")) return true;
 
-  // Widget config is public
+  // Widget config and agent lookup by username are public
   if (/^\/api\/agents\/[^/]+\/widget-config$/.test(pathname)) return true;
+  if (/^\/api\/agents\/by-username\/[^/]+$/.test(pathname)) return true;
 
   return false;
 }

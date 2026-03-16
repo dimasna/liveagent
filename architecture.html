@@ -69,7 +69,7 @@ flowchart TB
   subgraph USERS["&nbsp;&nbsp;Users&nbsp;&nbsp;"]
     direction LR
     BIZ["<b>Business Owner</b><br/>Dashboard"]
-    CALLER["<b>Customer</b><br/>Voice Widget / Phone"]
+    CALLER["<b>Customer</b><br/>Widget / Call Link"]
   end
 
   subgraph GCP_RUN["&nbsp;&nbsp;Google Cloud Run&nbsp;&nbsp;"]
@@ -97,6 +97,13 @@ flowchart TB
       EMBED["Embed Script<br/><i>widget.js &bull; esbuild IIFE</i>"]
       VOICE_UI["Voice Interface<br/><i>iframe &bull; Web Audio API<br/>Waveform &bull; Transcript</i>"]
       EMBED --> VOICE_UI
+    end
+
+    subgraph CALL_SVC["&nbsp;&nbsp;Call Service &mdash; Next.js 15&nbsp;&nbsp;"]
+      direction TB
+      CALL_PAGE["Dynamic Route<br/><i>/username &bull; SSR agent lookup</i>"]
+      CALL_UI["Call Interface<br/><i>Full-screen &bull; Web Audio API<br/>Waveform &bull; Booking Card</i>"]
+      CALL_PAGE --> CALL_UI
     end
   end
 
@@ -130,7 +137,10 @@ flowchart TB
 
   BIZ --> DASH
   CALLER --> EMBED
+  CALLER --> CALL_PAGE
+  CALL_PAGE -- "fetch agent<br/>config" --> API
   VOICE_UI -- "WebSocket<br/>audio stream" --> WS
+  CALL_UI -- "WebSocket<br/>audio stream" --> WS
   VS -- "bidirectional<br/>audio + tools" --> LIVE
   API -- "research<br/>voice preview" --> GENAI_SDK
   TOOLS -- "create/query<br/>events" --> GCAL
@@ -148,9 +158,9 @@ flowchart TB
   classDef google fill:#FBBC05,stroke:#e0a800,color:#1a1a1a,font-weight:bold
   classDef auth fill:#1e3a5f,stroke:#6366f1,color:#e2e8f0
 
-  class WEB_SVC,AGENT_SVC,WIDGET_SVC gcpBlue
+  class WEB_SVC,AGENT_SVC,WIDGET_SVC,CALL_SVC gcpBlue
   class GEMINI,LIVE,FC,GENAI_SDK gemini
-  class DASH,API,LIB,WS,VS,TOOLS,EMBED,VOICE_UI service
+  class DASH,API,LIB,WS,VS,TOOLS,EMBED,VOICE_UI,CALL_PAGE,CALL_UI service
   class PG,PRISMA data
   class BIZ,CALLER user
   class GCAL,PLACES google

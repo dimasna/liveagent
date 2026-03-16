@@ -145,6 +145,21 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
     },
   },
   {
+    name: "confirm_email",
+    description:
+      "Display the caller's email on the booking card so they can visually verify it. Call this BEFORE asking the caller to confirm their email, and BEFORE calling send_calendar_invite. This does NOT send anything — it only shows the email on screen for crosschecking.",
+    parameters: {
+      type: "object" as any,
+      properties: {
+        email: {
+          type: "string" as any,
+          description: "The email address the caller provided",
+        },
+      },
+      required: ["email"],
+    },
+  },
+  {
     name: "end_call",
     description:
       "End the phone call. Use this after saying goodbye to the caller. The call will be terminated immediately.",

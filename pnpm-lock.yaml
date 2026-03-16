@@ -25,7 +25,7 @@ importers:
         version: 0.5.0(6a2ed37ac561bd2e6719f5891abb471e)
       '@google/genai':
         specifier: ^1.37.0
-        version: 1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))
+        version: 1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@3.25.76))
       '@liveagent/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -54,6 +54,43 @@ importers:
       '@types/node':
         specifier: ^22.13.0
         version: 22.19.15
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  apps/call:
+    dependencies:
+      '@liveagent/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      next:
+        specifier: ^15.2.3
+        version: 15.5.12(@opentelemetry/api@1.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@liveagent/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@tailwindcss/postcss':
+        specifier: ^4.2.1
+        version: 4.2.1
+      '@types/node':
+        specifier: ^20
+        version: 20.19.37
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      tailwindcss:
+        specifier: ^4.0.8
+        version: 4.2.1
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -5838,7 +5875,7 @@ snapshots:
       '@google-cloud/opentelemetry-cloud-monitoring-exporter': 0.21.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@2.6.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)
       '@google-cloud/opentelemetry-cloud-trace-exporter': 3.0.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)
       '@google-cloud/storage': 7.19.0(encoding@0.1.13)
-      '@google/genai': 1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))
+      '@google/genai': 1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@3.25.76))
       '@mikro-orm/core': 6.6.9
       '@mikro-orm/mariadb': 6.6.9(@mikro-orm/core@6.6.9)(pg@8.19.0)
       '@mikro-orm/mssql': 6.6.9(@azure/core-client@1.10.1)(@mikro-orm/core@6.6.9)(mariadb@3.4.5)(pg@8.19.0)
@@ -5873,19 +5910,6 @@ snapshots:
       - utf-8-validate
 
   '@google/genai@1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@3.25.76))':
-    dependencies:
-      google-auth-library: 10.6.1
-      p-retry: 4.6.2
-      protobufjs: 7.5.4
-      ws: 8.19.0
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.27.1(zod@3.25.76)
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  '@google/genai@1.44.0(@modelcontextprotocol/sdk@1.27.1(zod@4.3.6))':
     dependencies:
       google-auth-library: 10.6.1
       p-retry: 4.6.2
@@ -6231,29 +6255,6 @@ snapshots:
       - pg-native
       - supports-color
       - tedious
-
-  '@modelcontextprotocol/sdk@1.27.1(zod@3.25.76)':
-    dependencies:
-      '@hono/node-server': 1.19.11(hono@4.12.6)
-      ajv: 8.18.0
-      ajv-formats: 3.0.1(ajv@8.18.0)
-      content-type: 1.0.5
-      cors: 2.8.6
-      cross-spawn: 7.0.6
-      eventsource: 3.0.7
-      eventsource-parser: 3.0.6
-      express: 5.2.1
-      express-rate-limit: 8.3.1(express@5.2.1)
-      hono: 4.12.6
-      jose: 6.2.1
-      json-schema-typed: 8.0.2
-      pkce-challenge: 5.0.1
-      raw-body: 3.0.2
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@4.3.6)
-    transitivePeerDependencies:
-      - supports-color
-    optional: true
 
   '@modelcontextprotocol/sdk@1.27.1(zod@4.3.6)':
     dependencies:

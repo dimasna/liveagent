@@ -10,12 +10,14 @@ import {
   CheckIcon,
   CodeIcon,
   GlobeIcon,
+  PhoneIcon,
   TrashIcon,
 } from "lucide-react";
 
 interface Agent {
   id: string;
   name: string;
+  username: string | null;
   businessName: string;
   businessType: string;
   timezone: string;
@@ -64,6 +66,17 @@ export default function PlaygroundPage() {
 
   // Deploy
   const [copied, setCopied] = useState(false);
+  const [copiedCallUrl, setCopiedCallUrl] = useState(false);
+  const [callBaseUrl, setCallBaseUrl] = useState("");
+
+  // Load config (call URL)
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c) => {
+        if (c.callUrl) setCallBaseUrl(c.callUrl);
+      });
+  }, []);
 
   // Load agents
   useEffect(() => {
@@ -157,10 +170,22 @@ export default function PlaygroundPage() {
     ? `<script\n  src="${widgetUrl}"\n  data-agent-id="${selectedAgentId}"${config.themeColor !== "#0a0a0a" ? `\n  data-color="${config.themeColor}"` : ""}${config.position !== "bottom-right" ? `\n  data-position="${config.position}"` : ""}\n  async\n></script>`
     : "";
 
+  const callUrl = agent?.username && callBaseUrl
+    ? `${callBaseUrl}/${agent.username}`
+    : null;
+
   function copyCode() {
     navigator.clipboard.writeText(embedCode).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function copyCallUrl() {
+    if (!callUrl) return;
+    navigator.clipboard.writeText(callUrl).then(() => {
+      setCopiedCallUrl(true);
+      setTimeout(() => setCopiedCallUrl(false), 2000);
     });
   }
 
@@ -229,6 +254,30 @@ export default function PlaygroundPage() {
                       onChange={(e) => setAgent({ ...agent, name: e.target.value })}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                     />
+                  </Field>
+                  <Field label="Call Link Username">
+                    <div className="flex items-center gap-0">
+                      <span className="shrink-0 rounded-l-lg border border-r-0 border-input bg-muted px-3 py-2 text-sm text-muted-foreground">
+                        /
+                      </span>
+                      <input
+                        value={agent.username || ""}
+                        onChange={(e) =>
+                          setAgent({
+                            ...agent,
+                            username:
+                              e.target.value
+                                .toLowerCase()
+                                .replace(/[^a-z0-9-]/g, "") || null,
+                          })
+                        }
+                        placeholder="joes-barbershop"
+                        className="w-full rounded-r-lg border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Unique URL for your call page. Only lowercase letters, numbers, and hyphens.
+                    </p>
                   </Field>
                   <Field label="Business Name">
                     <input
@@ -500,6 +549,52 @@ export default function PlaygroundPage() {
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* Call Link */}
+              <div className="rounded-xl border border-border">
+                <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
+                    <PhoneIcon className="h-5 w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Direct Call Link</p>
+                    <p className="text-xs text-muted-foreground">
+                      A standalone page for voice calls — like WhatsApp calling
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5">
+                  {callUrl ? (
+                    <>
+                      <p className="mb-3 text-sm text-muted-foreground">
+                        Share this link with your customers to start a voice call directly.
+                      </p>
+                      <div className="relative">
+                        <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-4 text-sm text-zinc-300 font-mono">
+                          {callUrl}
+                        </pre>
+                        <button
+                          onClick={copyCallUrl}
+                          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-200"
+                        >
+                          {copiedCallUrl ? (
+                            <CheckIcon className="h-4 w-4 text-green-400" />
+                          ) : (
+                            <CopyIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Set a <span className="font-medium text-foreground">Call Link Username</span> in the Settings tab to generate a direct call URL.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
