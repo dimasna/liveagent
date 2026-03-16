@@ -1,25 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, getErrorStatus } from "@lib/auth";
-import { db } from "@liveagent/db";
 
-type Params = { params: Promise<{ id: string }> };
-
-// GET /api/agents/:id/calendar/connect — Generate Google OAuth URL
-// Server-side so we don't leak client_id to the frontend
-export async function GET(req: NextRequest, { params }: Params) {
+// GET /api/workspace/calendar/connect — Generate Google OAuth URL for workspace
+export async function GET(req: NextRequest) {
   try {
-    const { orgId } = await getAuthUser();
-    const { id } = await params;
-
-    // Verify agent belongs to org
-    const agent = await db.agent.findFirst({
-      where: { id, orgId },
-      select: { id: true },
-    });
-
-    if (!agent) {
-      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
-    }
+    await getAuthUser();
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) {
@@ -31,13 +16,12 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     const appUrl =
       process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || req.headers.get("origin") || "";
-    // Use a fixed callback path so only ONE redirect URI needs to be
-    // registered in Google Cloud Console. The agent ID is passed via state.
-    const redirectUri = `${appUrl}/api/calendar/callback`;
+    const redirectUri = `${appUrl}/api/workspace/calendar/callback`;
 
     const scopes = [
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/userinfo.email",
     ];
 
     const authUrl = new URL(
@@ -49,10 +33,9 @@ export async function GET(req: NextRequest, { params }: Params) {
     authUrl.searchParams.set("scope", scopes.join(" "));
     authUrl.searchParams.set("access_type", "offline");
     authUrl.searchParams.set("prompt", "consent");
-    // Pass agent ID through state for verification
-    authUrl.searchParams.set("state", id);
+    authUrl.searchParams.set("state", "workspace");
 
-    return NextResponse.json({ url: authUrl.toString() });
+    return NextResponse.redirect(authUrl.toString());
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal error" },

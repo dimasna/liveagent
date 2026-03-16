@@ -144,9 +144,9 @@ export function CalendarConnect({
     <div className="rounded-xl border border-border p-6">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
             <svg
-              className="h-5 w-5 text-blue-600 dark:text-blue-400"
+              className="h-5 w-5 text-blue-400"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -171,7 +171,7 @@ export function CalendarConnect({
         {isConnected && (
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-green-500" />
-            <span className="text-xs font-medium text-green-600 dark:text-green-400">
+            <span className="text-xs font-medium text-green-400">
               Connected
             </span>
           </div>
@@ -183,8 +183,8 @@ export function CalendarConnect({
         <div
           className={`mb-4 rounded-lg px-4 py-3 text-sm ${
             toast.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-              : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+              ? "bg-green-500/10 text-green-400"
+              : "bg-red-500/10 text-red-400"
           }`}
         >
           {toast.message}
@@ -198,19 +198,19 @@ export function CalendarConnect({
             <h3 className="mb-2 text-sm font-medium">How it works</h3>
             <ol className="space-y-1.5 text-sm text-muted-foreground">
               <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-medium text-brand">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-foreground">
                   1
                 </span>
                 Connect your Google account
               </li>
               <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-medium text-brand">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-foreground">
                   2
                 </span>
                 Choose which calendar the agent should use
               </li>
               <li className="flex gap-2">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-medium text-brand">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-medium text-foreground">
                   3
                 </span>
                 Your agent can now check availability and create bookings
@@ -304,7 +304,7 @@ export function CalendarConnect({
                       </div>
                       {selectedId === cal.id && (
                         <svg
-                          className="h-4 w-4 text-brand"
+                          className="h-4 w-4 text-foreground"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -325,7 +325,7 @@ export function CalendarConnect({
                 No writable calendars found.{" "}
                 <button
                   onClick={loadCalendars}
-                  className="text-brand hover:underline"
+                  className="text-foreground hover:underline"
                 >
                   Refresh
                 </button>

@@ -4,7 +4,7 @@ import { getAuthUser, getErrorStatus } from "@lib/auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-// GET /api/agents/:id/stats - Get agent analytics
+// GET /api/agents/:id/stats - Get agent analytics from Conversation data
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const { orgId } = await getAuthUser();
@@ -17,43 +17,123 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const [totalCalls, totalBookings, recentCalls, outcomeBreakdown] =
-      await Promise.all([
-        db.callLog.count({ where: { agentId: id } }),
-        db.callLog.count({
-          where: { agentId: id, bookingMade: true },
+    const [
+      totalCalls,
+      completedCalls,
+      totalBookings,
+      recentCalls,
+      callsThisWeek,
+      statusBreakdown,
+      conversations,
+    ] = await Promise.all([
+      db.conversation.count({ where: { agentId: id } }),
+      db.conversation.count({ where: { agentId: id, status: "COMPLETED" } }),
+      db.conversation.count({ where: { agentId: id, bookingMade: true } }),
+      db.conversation.count({
+        where: { agentId: id, startedAt: { gte: thirtyDaysAgo } },
+      }),
+      db.conversation.count({
+        where: { agentId: id, startedAt: { gte: sevenDaysAgo } },
+      }),
+      db.conversation.groupBy({
+        by: ["status"],
+        where: { agentId: id, startedAt: { gte: thirtyDaysAgo } },
+        _count: true,
+      }),
+      // Fetch completed conversations with timestamps to compute duration
+      db.conversation.findMany({
+        where: { agentId: id, status: "COMPLETED", endedAt: { not: null } },
+        select: { startedAt: true, endedAt: true },
+      }),
+    ]);
+
+    // Compute total minutes from conversation start/end timestamps
+    let totalSeconds = 0;
+    for (const c of conversations) {
+      if (c.endedAt) {
+        totalSeconds += Math.round(
+          (c.endedAt.getTime() - c.startedAt.getTime()) / 1000
+        );
+      }
+    }
+    const totalMinutes = Math.round(totalSeconds / 60);
+
+    // Average call duration
+    const avgDurationSecs =
+      conversations.length > 0
+        ? Math.round(totalSeconds / conversations.length)
+        : 0;
+
+    // Daily call counts for the last 7 days
+    const dailyCalls: { date: string; calls: number; bookings: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now);
+      dayStart.setDate(dayStart.getDate() - i);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const [dayCalls, dayBookings] = await Promise.all([
+        db.conversation.count({
+          where: { agentId: id, startedAt: { gte: dayStart, lt: dayEnd } },
         }),
-        db.callLog.count({
-          where: { agentId: id, startedAt: { gte: thirtyDaysAgo } },
-        }),
-        db.callLog.groupBy({
-          by: ["outcome"],
-          where: { agentId: id, startedAt: { gte: thirtyDaysAgo } },
-          _count: true,
+        db.conversation.count({
+          where: {
+            agentId: id,
+            bookingMade: true,
+            startedAt: { gte: dayStart, lt: dayEnd },
+          },
         }),
       ]);
 
-    const totalMinutes = await db.callLog.aggregate({
+      dailyCalls.push({
+        date: dayStart.toISOString().split("T")[0],
+        calls: dayCalls,
+        bookings: dayBookings,
+      });
+    }
+
+    // Recent conversations for the activity list
+    const recentConversations = await db.conversation.findMany({
       where: { agentId: id },
-      _sum: { durationSecs: true },
+      orderBy: { startedAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        callerPhone: true,
+        callerName: true,
+        status: true,
+        bookingMade: true,
+        startedAt: true,
+        endedAt: true,
+        summary: true,
+      },
     });
 
     return NextResponse.json({
       totalCalls,
+      completedCalls,
       totalBookings,
       recentCalls,
-      totalMinutes: Math.round(
-        (totalMinutes._sum.durationSecs || 0) / 60
-      ),
+      callsThisWeek,
+      totalMinutes,
+      avgDurationSecs,
       bookingRate:
         totalCalls > 0
           ? Math.round((totalBookings / totalCalls) * 100)
           : 0,
-      outcomeBreakdown: outcomeBreakdown.map((o) => ({
-        outcome: o.outcome,
-        count: o._count,
+      completionRate:
+        totalCalls > 0
+          ? Math.round((completedCalls / totalCalls) * 100)
+          : 0,
+      statusBreakdown: statusBreakdown.map((s) => ({
+        status: s.status,
+        count: s._count,
       })),
+      dailyCalls,
+      recentConversations,
     });
   } catch (error) {
     return NextResponse.json(

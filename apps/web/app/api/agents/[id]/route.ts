@@ -54,6 +54,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
         operatingHours: body.operatingHours,
         bookingDuration: body.bookingDuration,
         maxAdvanceDays: body.maxAdvanceDays,
+        capacityType: body.capacityType,
+        capacityCount: body.capacityCount,
+        widgetColor: body.widgetColor,
+        widgetBgColor: body.widgetBgColor,
+        widgetPosition: body.widgetPosition,
         status: body.status,
       },
     });

@@ -22,7 +22,7 @@ export function MessageBubble({ message: msg }: MessageBubbleProps) {
           isUser
             ? "bg-brand text-brand-foreground"
             : isTool
-              ? "bg-yellow-50 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
+              ? "bg-yellow-500/10 text-yellow-400"
               : "bg-muted"
         }`}
       >

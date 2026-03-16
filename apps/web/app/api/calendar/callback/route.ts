@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const error = url.searchParams.get("error");
   const agentId = url.searchParams.get("state");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
 
   // If no agent ID in state, we can't redirect properly
   if (!agentId) {

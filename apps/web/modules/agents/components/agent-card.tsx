@@ -18,15 +18,15 @@ export function AgentCard({ agent }: AgentCardProps) {
   return (
     <Link
       href={`/agents/${agent.id}`}
-      className="group rounded-xl border border-border p-6 transition-colors hover:border-brand/50 hover:bg-accent/50"
+      className="group rounded-xl border border-border p-6 transition-colors hover:border-foreground/10 hover:bg-accent/50"
     >
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold group-hover:text-brand">{agent.name}</h3>
+        <h3 className="font-semibold group-hover:text-foreground">{agent.name}</h3>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             agent.status === "ACTIVE"
-              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+              ? "bg-green-500/10 text-green-400"
+              : "bg-yellow-500/10 text-yellow-400"
           }`}
         >
           {agent.status}
@@ -45,7 +45,7 @@ export function AgentCard({ agent }: AgentCardProps) {
         <span>{agent._count.conversations} conversations</span>
         <span
           className={
-            agent.calendarId ? "text-green-600" : "text-muted-foreground"
+            agent.calendarId ? "text-green-400" : "text-muted-foreground"
           }
         >
           {agent.calendarId ? "Calendar connected" : "No calendar"}

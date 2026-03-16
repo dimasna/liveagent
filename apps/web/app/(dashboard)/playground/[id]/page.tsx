@@ -16,6 +16,7 @@ export default function PlaygroundPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isMuted, setIsMuted] = useState(false);
 
+  const [agentWsUrl, setAgentWsUrl] = useState("");
   const wsRef = useRef<WebSocket | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const captureContextRef = useRef<AudioContext | null>(null);
@@ -29,6 +30,10 @@ export default function PlaygroundPage() {
   const sessionId = useRef(
     `test-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
+
+  useEffect(() => {
+    fetch("/api/config").then(r => r.json()).then(c => setAgentWsUrl(c.agentWsUrl));
+  }, []);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,7 +95,7 @@ export default function PlaygroundPage() {
       gainNode.connect(playbackCtx.destination);
 
       // --- WebSocket ---
-      const wsUrl = `${process.env.NEXT_PUBLIC_AGENT_WS_URL || "ws://localhost:8080"}/ws/${agentId}/${sessionId.current}`;
+      const wsUrl = `${agentWsUrl || "ws://localhost:8080"}/ws/${agentId}/${sessionId.current}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -200,6 +205,11 @@ export default function PlaygroundPage() {
     setState("idle");
   }
 
+  const [widgetUrl, setWidgetUrl] = useState("");
+  useEffect(() => {
+    fetch("/api/config").then(r => r.json()).then(c => setWidgetUrl(c.widgetUrl));
+  }, []);
+
   return (
     <div className="flex h-full flex-col p-8">
       <div className="mb-6">
@@ -210,77 +220,13 @@ export default function PlaygroundPage() {
       </div>
 
       <div className="flex flex-1 gap-6">
-        {/* Call controls */}
-        <div className="flex w-80 flex-col items-center justify-center rounded-xl border border-border p-8">
-          <div
-            className={`mb-6 flex h-24 w-24 items-center justify-center rounded-full ${
-              state === "connected"
-                ? "animate-pulse bg-green-100 dark:bg-green-900"
-                : state === "connecting"
-                  ? "animate-pulse bg-yellow-100 dark:bg-yellow-900"
-                  : "bg-muted"
-            }`}
-          >
-            <svg
-              className={`h-10 w-10 ${
-                state === "connected"
-                  ? "text-green-600"
-                  : state === "connecting"
-                    ? "text-yellow-600"
-                    : "text-muted-foreground"
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
-              />
-            </svg>
-          </div>
-
-          <p className="mb-6 text-sm font-medium capitalize">{state}</p>
-
-          <div className="flex gap-3">
-            {state === "idle" || state === "error" ? (
-              <button
-                onClick={startCall}
-                className="rounded-full bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-700"
-              >
-                Start Call
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    setIsMuted(!isMuted);
-                    isMutedRef.current = !isMutedRef.current;
-                    if (mediaStreamRef.current) {
-                      mediaStreamRef.current.getAudioTracks().forEach((t) => {
-                        t.enabled = isMutedRef.current ? false : true;
-                      });
-                    }
-                  }}
-                  className={`rounded-full px-4 py-3 text-sm font-medium ${
-                    isMuted
-                      ? "bg-red-100 text-red-600 dark:bg-red-900"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isMuted ? "Unmute" : "Mute"}
-                </button>
-                <button
-                  onClick={endCall}
-                  className="rounded-full bg-red-600 px-6 py-3 text-sm font-medium text-white hover:bg-red-700"
-                >
-                  End Call
-                </button>
-              </>
-            )}
-          </div>
+        {/* Widget preview */}
+        <div className="flex w-[420px] flex-col items-center justify-center rounded-xl border border-border overflow-hidden">
+          <iframe
+            src={`${widgetUrl}/${agentId}`}
+            className="w-full h-full border-none"
+            allow="microphone"
+          />
         </div>
 
         {/* Activity log */}

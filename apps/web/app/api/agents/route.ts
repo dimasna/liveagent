@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const agent = await db.agent.create({
       data: {
         orgId,
-        name: body.name || "New Agent",
+        name: body.name || "Booking Agent",
         businessName: body.businessName || "",
         businessType: body.businessType || "restaurant",
         timezone: body.timezone || "America/New_York",
@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
         operatingHours: body.operatingHours || DEFAULT_OPERATING_HOURS,
         bookingDuration: body.bookingDuration || 60,
         maxAdvanceDays: body.maxAdvanceDays || 30,
+        capacityType: body.capacityType || "slots",
+        capacityCount: body.capacityCount || 0,
       },
     });
 

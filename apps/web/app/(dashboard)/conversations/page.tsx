@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
@@ -8,6 +9,7 @@ interface Conversation {
   id: string;
   callerPhone: string | null;
   callerName: string | null;
+  callerEmail: string | null;
   status: string;
   bookingMade: boolean;
   summary: string | null;
@@ -18,12 +20,15 @@ interface Conversation {
 }
 
 export default function ConversationsPage() {
+  const searchParams = useSearchParams();
+  const agentId = searchParams.get("agentId");
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("");
 
   useEffect(() => {
     const params = new URLSearchParams();
+    if (agentId) params.set("agentId", agentId);
     if (filter) params.set("status", filter);
     fetch(`/api/conversations?${params}`)
       .then((r) => r.ok ? r.json() : null)
@@ -31,7 +36,7 @@ export default function ConversationsPage() {
         if (data) setConversations(Array.isArray(data.conversations) ? data.conversations : []);
       })
       .finally(() => setLoading(false));
-  }, [filter]);
+  }, [filter, agentId]);
 
   if (loading) {
     return (
@@ -82,11 +87,11 @@ export default function ConversationsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium">
-                    {conv.callerName?.[0]?.toUpperCase() || "?"}
+                    {(conv.callerName || conv.callerEmail || "?")[0].toUpperCase()}
                   </div>
                   <div>
                     <p className="font-medium">
-                      {conv.callerName || conv.callerPhone || "Unknown Caller"}
+                      {conv.callerName || conv.callerEmail || conv.callerPhone || "Unknown Caller"}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {conv.agent.name} &middot;{" "}
@@ -98,16 +103,16 @@ export default function ConversationsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   {conv.bookingMade && (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+                    <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
                       Booked
                     </span>
                   )}
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       conv.status === "COMPLETED"
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                        ? "bg-blue-500/10 text-blue-400"
                         : conv.status === "IN_PROGRESS"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          ? "bg-yellow-500/10 text-yellow-400"
                           : "bg-muted text-muted-foreground"
                     }`}
                   >

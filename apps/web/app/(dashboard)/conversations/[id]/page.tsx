@@ -63,7 +63,7 @@ export default function ConversationDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             {conversation.bookingMade && (
-              <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+              <span className="rounded-full bg-green-500/10 px-3 py-1 text-sm font-medium text-green-400">
                 Booking Made
               </span>
             )}
@@ -75,8 +75,8 @@ export default function ConversationDetailPage() {
 
         {/* Booking details */}
         {conversation.bookingStart && (
-          <div className="mt-4 rounded-lg bg-green-50 p-4 dark:bg-green-950">
-            <p className="text-sm font-medium text-green-700 dark:text-green-300">
+          <div className="mt-4 rounded-lg bg-green-500/10 p-4">
+            <p className="text-sm font-medium text-green-400">
               Booking:{" "}
               {format(new Date(conversation.bookingStart), "PPp")} —{" "}
               {conversation.bookingEnd &&
@@ -107,7 +107,7 @@ export default function ConversationDetailPage() {
                   msg.role === "USER"
                     ? "bg-brand text-brand-foreground"
                     : msg.role === "TOOL"
-                      ? "bg-yellow-50 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
+                      ? "bg-yellow-500/10 text-yellow-400"
                       : "bg-muted"
                 }`}
               >

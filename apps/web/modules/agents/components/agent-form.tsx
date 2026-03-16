@@ -1,6 +1,7 @@
 "use client";
 
-import { BUSINESS_TYPES, GEMINI_VOICES } from "@liveagent/shared";
+import { BUSINESS_TYPES } from "@liveagent/shared";
+import { VoiceSelector } from "./voice-selector";
 
 interface AgentFormData {
   name: string;
@@ -71,17 +72,10 @@ export function AgentForm({ data, onChange }: AgentFormProps) {
         <h2 className="mb-4 font-semibold">Voice Settings</h2>
         <div className="space-y-4">
           <Field label="Voice">
-            <select
+            <VoiceSelector
               value={data.voice}
-              onChange={(e) => update("voice", e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-            >
-              {GEMINI_VOICES.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => update("voice", v)}
+            />
           </Field>
           <Field label="Greeting Message">
             <textarea

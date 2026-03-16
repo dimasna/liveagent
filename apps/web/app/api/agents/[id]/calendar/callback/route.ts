@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const code = url.searchParams.get("code");
     const error = url.searchParams.get("error");
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
     const redirectTarget = `${appUrl}/agents/${id}`;
 
     if (error) {
@@ -124,7 +124,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     // For other errors, try to redirect with error message
     const { id } = await params;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || "";
     return NextResponse.redirect(
       `${appUrl}/agents/${id}?calendar=error&message=${encodeURIComponent("An unexpected error occurred")}`
     );
