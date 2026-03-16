@@ -79,7 +79,7 @@ resource "null_resource" "build_agent" {
         --config /dev/stdin . <<'EOF'
       steps:
         - name: gcr.io/cloud-builders/docker
-          args: ['build', '-f', 'apps/agent/Dockerfile', '-t', '${local.registry}/agent:latest', '.']
+          args: ['build', '--no-cache', '-f', 'apps/agent/Dockerfile', '-t', '${local.registry}/agent:latest', '.']
       images: ['${local.registry}/agent:latest']
       options:
         logging: CLOUD_LOGGING_ONLY
@@ -104,7 +104,7 @@ resource "null_resource" "build_web" {
         --config /dev/stdin . <<'EOF'
       steps:
         - name: gcr.io/cloud-builders/docker
-          args: ['build', '-f', 'apps/web/Dockerfile', '-t', '${local.registry}/web:latest', '.']
+          args: ['build', '--no-cache', '-f', 'apps/web/Dockerfile', '-t', '${local.registry}/web:latest', '.']
       images: ['${local.registry}/web:latest']
       options:
         logging: CLOUD_LOGGING_ONLY
@@ -129,7 +129,7 @@ resource "null_resource" "build_widget" {
         --config /dev/stdin . <<'EOF'
       steps:
         - name: gcr.io/cloud-builders/docker
-          args: ['build', '-f', 'apps/widget/Dockerfile', '-t', '${local.registry}/widget:latest', '.']
+          args: ['build', '--no-cache', '-f', 'apps/widget/Dockerfile', '-t', '${local.registry}/widget:latest', '.']
       images: ['${local.registry}/widget:latest']
       options:
         logging: CLOUD_LOGGING_ONLY
@@ -258,6 +258,9 @@ resource "google_cloud_run_v2_service" "web" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    # Force new revision on every apply so Cloud Run pulls the latest image
+    labels = { deployed_at = formatdate("YYYYMMDDhhmmss", timestamp()) }
+
     service_account = google_service_account.cloudrun.email
 
     scaling {
@@ -373,6 +376,8 @@ resource "google_cloud_run_v2_service" "agent" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    labels = { deployed_at = formatdate("YYYYMMDDhhmmss", timestamp()) }
+
     service_account = google_service_account.cloudrun.email
 
     scaling {
@@ -450,6 +455,8 @@ resource "google_cloud_run_v2_service" "widget" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    labels = { deployed_at = formatdate("YYYYMMDDhhmmss", timestamp()) }
+
     service_account = google_service_account.cloudrun.email
 
     scaling {
