@@ -78,11 +78,7 @@ variable "google_places_api_key" {
 }
 
 variable "domain" {
-  description = "Root domain (e.g. liveagent.dev). Required for production — generates URLs for web, agent.{domain}, widget.{domain}. Without this, services cannot connect to each other."
+  description = "Root domain (e.g. liveagent.dev). When set, uses custom subdomains: agent.{domain}, widget.{domain}. When empty, uses Cloud Run generated URLs."
   type        = string
-
-  validation {
-    condition     = var.domain != ""
-    error_message = "domain is required. Set it in terraform.tfvars (e.g. domain = \"liveagent.dev\"). Services need this to connect to each other."
-  }
+  default     = ""
 }

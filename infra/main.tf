@@ -20,6 +20,8 @@ provider "google" {
   region  = var.region
 }
 
+data "google_project" "current" {}
+
 # ---------- Enable required APIs ----------
 resource "google_project_service" "apis" {
   for_each = toset([
@@ -52,13 +54,14 @@ locals {
   registry   = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.repo.repository_id}"
   source_dir = "${path.module}/.."
 
-  # Domain URLs — set var.domain for cross-service connectivity in production.
-  # Without a domain, URLs are empty and services fall back to runtime defaults.
+  # Service URLs — uses custom domain when set, otherwise Cloud Run generated URLs.
+  # Cloud Run URL pattern: https://{service}-{project_number}.{region}.run.app
   has_domain   = var.domain != ""
-  app_url      = local.has_domain ? "https://${var.domain}" : ""
-  agent_url    = local.has_domain ? "https://agent.${var.domain}" : ""
-  agent_ws_url = local.has_domain ? "wss://agent.${var.domain}" : ""
-  widget_url   = local.has_domain ? "https://widget.${var.domain}" : ""
+  run_base     = "${data.google_project.current.number}.${var.region}.run.app"
+  app_url      = local.has_domain ? "https://${var.domain}" : "https://liveagent-web-${local.run_base}"
+  agent_url    = local.has_domain ? "https://agent.${var.domain}" : "https://liveagent-agent-${local.run_base}"
+  agent_ws_url = local.has_domain ? "wss://agent.${var.domain}" : "wss://liveagent-agent-${local.run_base}"
+  widget_url   = local.has_domain ? "https://widget.${var.domain}" : "https://liveagent-widget-${local.run_base}"
 }
 
 # ---------- Cloud Build: build & push images ----------
