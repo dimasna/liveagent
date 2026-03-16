@@ -11,25 +11,28 @@ I realized that the Gemini Live API's native bidirectional audio streaming could
 **Liveagent.dev** is a platform that lets any business create and deploy an AI-powered voice agent that handles booking and reservation calls in real-time. Here's how it works:
 
 - **Business owners** sign in to a dashboard, configure their agent (business type, operating hours, voice persona, booking rules, resource capacity), and connect their Google Calendar via OAuth.
-- **Customers** interact with the agent through an embeddable voice widget on the business's website. They simply click a button and start talking — no forms, no typing, no hold music, no waiting for a chat reply.
-- **The agent** carries on a natural voice conversation powered by Gemini 2.5 Flash Live (native audio). It checks real-time availability, suggests open time slots, creates bookings, handles rescheduling and cancellations, and sends calendar invites — all mid-conversation using Gemini's function calling.
+- **Customers** interact with the agent in two ways: through an **embeddable voice widget** on the business's website, or via a **direct call link** (e.g., `call.liveagent.dev/joes-barbershop`) — a dedicated, WhatsApp-style full-screen calling interface that businesses can share via social bios, QR codes, or SMS. Either way, customers just click and start talking — no forms, no typing, no hold music.
+- **The agent** carries on a natural voice conversation powered by Gemini 2.5 Flash Live (native audio). It checks real-time availability, suggests open time slots, creates bookings, handles rescheduling and cancellations, and sends calendar invites — all mid-conversation using Gemini's function calling. Before sending a calendar invite, the agent displays the caller's email on a visual booking card for crosschecking, then verbally confirms it before proceeding.
+- **Graceful call handling** — When the agent ends a call, it finishes its current sentence before disconnecting, using Gemini's `turnComplete` event rather than abrupt cutoffs. This makes the experience feel natural and polished.
 - **After the call**, the business owner can review full conversation transcripts, analytics (call volume, booking rates, average duration), and manage upcoming reservations — all from the dashboard.
 
 It supports 8 different voice personas, configurable operating hours per day, resource management (tables, rooms, courts, chairs), and works for a wide range of business types including restaurants, salons, medical clinics, spas, fitness studios, and more.
 
 ## How I built it
 
-I built Liveagent entirely solo, architecting it as a **monorepo** with three services, all deployed on **Google Cloud Run**:
+I built Liveagent entirely solo, architecting it as a **monorepo** with four services, all deployed on **Google Cloud Run**:
 
-1. **Agent Service** (Fastify 5) — The core voice engine. It manages WebSocket connections from clients, streams PCM audio bidirectionally with the **Gemini 2.5 Flash Live API** using the `@google/genai` SDK, and executes function calls (check availability, create/reschedule/cancel bookings, send calendar invites) against the **Google Calendar API** via OAuth 2.0.
+1. **Agent Service** (Fastify 5) — The core voice engine. It manages WebSocket connections from clients, streams PCM audio bidirectionally with the **Gemini 2.5 Flash Live API** using the `@google/genai` SDK, and executes function calls (check availability, create/reschedule/cancel bookings, confirm email, send calendar invites) against the **Google Calendar API** via OAuth 2.0. It implements graceful call ending by listening for Gemini's `turnComplete` event before disconnecting, ensuring the agent always finishes speaking.
 
-2. **Web Dashboard** (Next.js 15 / React 19) — Where business owners configure agents, connect Google Calendar, view conversation transcripts, and monitor analytics. Uses iron-session for auth, TanStack Query for data fetching, and shadcn/ui for the interface.
+2. **Web Dashboard** (Next.js 15 / React 19) — Where business owners configure agents (including a unique call link username), connect Google Calendar, view conversation transcripts, and monitor analytics. Uses iron-session for auth, TanStack Query for data fetching, and shadcn/ui for the interface.
 
-3. **Embeddable Widget** (Next.js 15) — A lightweight voice widget that any website can embed with a single `<script>` tag. It captures microphone audio via the Web Audio API, encodes it to PCM 16kHz, and streams it over WebSocket to the agent service. It also renders a live transcript and booking confirmation cards.
+3. **Embeddable Widget** (Next.js 15) — A lightweight voice widget that any website can embed with a single `<script>` tag. It captures microphone audio via the Web Audio API, encodes it to PCM 16kHz, and streams it over WebSocket to the agent service. It renders a live transcript and phased booking confirmation cards with email verification.
+
+4. **Call App** (Next.js 15) — A standalone, WhatsApp-style full-screen calling interface accessible via direct URL (e.g., `call.liveagent.dev/joes-barbershop`). Businesses set a unique username in the dashboard, and customers can call the agent without visiting the business's website. Features animated waveform visualization, booking cards, and a mobile-optimized dark UI.
 
 All three services share a **PostgreSQL** database (Cloud SQL) via **Prisma ORM**, and common code lives in shared packages (UI components, constants, DB client). Infrastructure is provisioned with **Terraform** and deployed via **Cloud Build** to **Google Artifact Registry** and **Cloud Run**.
 
-The voice pipeline works like this: Widget captures audio → WebSocket → Agent service → Gemini Live API (bidirectional streaming) → Function calling for calendar operations → Audio response streamed back → Widget plays audio. The entire round-trip feels conversational, with support for barge-in (interruption) via Gemini's built-in Voice Activity Detection.
+The voice pipeline works like this: Widget/Call App captures audio → WebSocket → Agent service → Gemini Live API (bidirectional streaming) → Function calling for calendar operations → Audio response streamed back → Client plays audio. The entire round-trip feels conversational, with support for barge-in (interruption) via Gemini's built-in Voice Activity Detection.
 
 ## Challenges I ran into
 
@@ -42,10 +45,11 @@ The voice pipeline works like this: Widget captures audio → WebSocket → Agen
 ## Accomplishments that I'm proud of
 
 - **End-to-end voice booking in under 60 seconds** — A customer can call, check availability, book a time slot, and receive a Google Calendar invite, all through natural conversation, in under a minute.
-- **One-script embed** — Any business can add the voice agent to their website with a single `<script>` tag, no technical expertise required.
+- **Two deployment options** — Embed a widget on any website with a single `<script>` tag, or share a direct call link (`call.liveagent.dev/your-business`) via social media, QR codes, or SMS — no website needed.
 - **Built entirely solo** — From database schema to Terraform infrastructure to real-time audio streaming to frontend dashboard — every line of code was written by one person.
 - **Production-grade infrastructure** — Full Terraform IaC, Cloud Run auto-scaling, Secret Manager integration, and multi-stage Docker builds. This isn't a demo — it's deployable.
-- **Seamless Gemini function calling** — The agent naturally weaves tool calls into conversation flow. It checks availability, creates bookings, and sends invites without the user ever feeling like they're interacting with an API.
+- **Seamless Gemini function calling** — The agent naturally weaves tool calls into conversation flow. It checks availability, creates bookings, confirms emails visually on-screen, and sends invites without the user ever feeling like they're interacting with an API.
+- **Graceful conversation endings** — The agent finishes its sentence before ending the call, using Gemini's `turnComplete` event for timing instead of abrupt timeouts.
 - **Support for diverse business types** — From restaurants to medical clinics to tennis courts, the system handles different resource types, capacity models, and booking durations.
 
 ## What I learned
@@ -58,10 +62,9 @@ The voice pipeline works like this: Widget captures audio → WebSocket → Agen
 
 ## What's next for Liveagent.dev - Live Voice Agent for Booking and Reservation
 
-- **Telephony integration** — Connect agents to real phone numbers via Twilio/Google Voice so customers can call in, not just use the web widget.
+- **Telephony integration** — Connect agents to real phone numbers via Twilio/Google Voice so customers can call in from any phone.
 - **Multi-language support** — Leverage Gemini's multilingual capabilities to serve customers in their preferred language.
 - **Vision mode** — Allow customers to share images (e.g., photos of a venue setup they want) using Gemini's multimodal capabilities.
 - **SMS/WhatsApp follow-ups** — Automated reminders and confirmation messages after bookings.
-- **Multi-tenant SaaS** — Scale from single-tenant to a full marketplace where any business can sign up and deploy an agent in minutes.
 - **Custom knowledge bases** — Let businesses upload menus, service catalogs, and FAQs that the agent can reference during calls.
 - **Analytics AI** — Use Gemini to analyze conversation patterns and suggest improvements to agent configuration.
