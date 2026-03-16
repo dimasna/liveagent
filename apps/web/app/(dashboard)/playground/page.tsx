@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BUSINESS_TYPES } from "@liveagent/shared";
+import { BUSINESS_TYPES, DEFAULT_OPERATING_HOURS } from "@liveagent/shared";
 import { VoiceSelector } from "@modules/agents/components/voice-selector";
 import {
   Loader2Icon,
@@ -12,6 +12,7 @@ import {
   GlobeIcon,
   PhoneIcon,
   TrashIcon,
+  ClockIcon,
 } from "lucide-react";
 
 interface Agent {
@@ -27,6 +28,9 @@ interface Agent {
   calendarId: string | null;
   bookingDuration: number;
   maxAdvanceDays: number;
+  operatingHours: Record<string, { open: string; close: string } | null> | null;
+  capacityType: string;
+  capacityCount: number;
   widgetColor: string;
   widgetBgColor: string;
   widgetPosition: string;
@@ -40,6 +44,26 @@ interface WidgetConfig {
   greeting: string;
   buttonSize: "small" | "medium" | "large";
 }
+
+const DAY_LABELS: { key: string; label: string }[] = [
+  { key: "mon", label: "Mon" },
+  { key: "tue", label: "Tue" },
+  { key: "wed", label: "Wed" },
+  { key: "thu", label: "Thu" },
+  { key: "fri", label: "Fri" },
+  { key: "sat", label: "Sat" },
+  { key: "sun", label: "Sun" },
+];
+
+const CAPACITY_TYPE_LABELS: Record<string, string> = {
+  tables: "Tables",
+  rooms: "Rooms",
+  chairs: "Chairs",
+  courts: "Courts",
+  slots: "Slots",
+  units: "Units",
+  bays: "Bays",
+};
 
 const DEFAULT_CONFIG: WidgetConfig = {
   themeColor: "#0a0a0a",
@@ -339,30 +363,118 @@ export default function PlaygroundPage() {
                 </div>
               </div>
 
+              {/* Operating Hours */}
+              <div className="rounded-xl border border-border p-5">
+                <h2 className="mb-4 font-semibold flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4" />
+                  Operating Hours
+                </h2>
+                <div className="space-y-2">
+                  {DAY_LABELS.map(({ key, label }) => {
+                    const hours = agent.operatingHours || DEFAULT_OPERATING_HOURS;
+                    const dayHours = hours[key];
+                    const isOpen = dayHours !== null && dayHours !== undefined;
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                      >
+                        <span className="w-12 text-sm font-medium">{label}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newHours = { ...(agent.operatingHours || DEFAULT_OPERATING_HOURS) };
+                            newHours[key] = isOpen ? null : { open: "09:00", close: "17:00" };
+                            setAgent({ ...agent, operatingHours: newHours });
+                          }}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            isOpen
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {isOpen ? "Open" : "Closed"}
+                        </button>
+                        {isOpen && dayHours && (
+                          <div className="flex items-center gap-2 ml-auto">
+                            <input
+                              type="time"
+                              value={dayHours.open}
+                              onChange={(e) => {
+                                const newHours = { ...(agent.operatingHours || DEFAULT_OPERATING_HOURS) };
+                                newHours[key] = { ...dayHours, open: e.target.value };
+                                setAgent({ ...agent, operatingHours: newHours });
+                              }}
+                              className="rounded border border-input bg-background px-2 py-1 text-xs"
+                            />
+                            <span className="text-xs text-muted-foreground">to</span>
+                            <input
+                              type="time"
+                              value={dayHours.close}
+                              onChange={(e) => {
+                                const newHours = { ...(agent.operatingHours || DEFAULT_OPERATING_HOURS) };
+                                newHours[key] = { ...dayHours, close: e.target.value };
+                                setAgent({ ...agent, operatingHours: newHours });
+                              }}
+                              className="rounded border border-input bg-background px-2 py-1 text-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Booking Settings */}
               <div className="rounded-xl border border-border p-5">
                 <h2 className="mb-4 font-semibold">Booking Settings</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Slot Duration (min)">
-                    <input
-                      type="number"
-                      value={agent.bookingDuration}
-                      onChange={(e) =>
-                        setAgent({ ...agent, bookingDuration: parseInt(e.target.value) || 60 })
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                    />
-                  </Field>
-                  <Field label="Max Advance (days)">
-                    <input
-                      type="number"
-                      value={agent.maxAdvanceDays}
-                      onChange={(e) =>
-                        setAgent({ ...agent, maxAdvanceDays: parseInt(e.target.value) || 30 })
-                      }
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                    />
-                  </Field>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Slot Duration (min)">
+                      <input
+                        type="number"
+                        value={agent.bookingDuration}
+                        onChange={(e) =>
+                          setAgent({ ...agent, bookingDuration: parseInt(e.target.value) || 60 })
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </Field>
+                    <Field label="Max Advance (days)">
+                      <input
+                        type="number"
+                        value={agent.maxAdvanceDays}
+                        onChange={(e) =>
+                          setAgent({ ...agent, maxAdvanceDays: parseInt(e.target.value) || 30 })
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="Capacity Type">
+                      <select
+                        value={agent.capacityType || "slots"}
+                        onChange={(e) => setAgent({ ...agent, capacityType: e.target.value })}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        {Object.entries(CAPACITY_TYPE_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label={`Total ${CAPACITY_TYPE_LABELS[agent.capacityType || "slots"] || "Units"}`}>
+                      <input
+                        type="number"
+                        value={agent.capacityCount || 0}
+                        onChange={(e) =>
+                          setAgent({ ...agent, capacityCount: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </Field>
+                  </div>
                 </div>
               </div>
 

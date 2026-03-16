@@ -43,9 +43,17 @@ function mapOperatingHours(
     if (!dayKey) continue;
 
     const openTime = `${pad(period.open.hour)}:${pad(period.open.minute)}`;
-    const closeTime = period.close
-      ? `${pad(period.close.hour)}:${pad(period.close.minute)}`
-      : "23:59";
+    let closeTime: string;
+    if (!period.close) {
+      // No close = open 24 hours
+      closeTime = "23:59";
+    } else if (period.close.day !== period.open.day) {
+      // Cross-midnight: business closes the next day (e.g. 5pm-2am).
+      // Cap at end of opening day since our model is per-day.
+      closeTime = "23:59";
+    } else {
+      closeTime = `${pad(period.close.hour)}:${pad(period.close.minute)}`;
+    }
 
     // If multiple periods for same day, use earliest open and latest close
     const existing = hours[dayKey];

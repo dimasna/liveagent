@@ -36,9 +36,17 @@ function mapOperatingHours(
     const dayKey = DAY_MAP[period.open.day];
     if (!dayKey) continue;
     const openTime = `${pad(period.open.hour)}:${pad(period.open.minute)}`;
-    const closeTime = period.close
-      ? `${pad(period.close.hour)}:${pad(period.close.minute)}`
-      : "23:59";
+    let closeTime: string;
+    if (!period.close) {
+      // No close = open 24 hours
+      closeTime = "23:59";
+    } else if (period.close.day !== period.open.day) {
+      // Cross-midnight: business closes the next day (e.g. 5pm-2am).
+      // Cap at end of opening day since our model is per-day.
+      closeTime = "23:59";
+    } else {
+      closeTime = `${pad(period.close.hour)}:${pad(period.close.minute)}`;
+    }
     const existing = hours[dayKey];
     if (existing) {
       if (openTime < existing.open) existing.open = openTime;
@@ -148,6 +156,26 @@ export async function POST(req: NextRequest) {
               result.address = placesData.address;
               result.phone = placesData.phone;
               result.operatingHours = placesData.operatingHours;
+
+              // Resolve business timezone from coordinates
+              const lat = place.location?.latitude;
+              const lng = place.location?.longitude;
+              if (lat && lng && placesApiKey) {
+                try {
+                  const timestamp = Math.floor(Date.now() / 1000);
+                  const tzRes = await fetch(
+                    `https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${timestamp}&key=${placesApiKey}`
+                  );
+                  if (tzRes.ok) {
+                    const tzData = await tzRes.json();
+                    if (tzData.timeZoneId) {
+                      result.timezone = tzData.timeZoneId;
+                    }
+                  }
+                } catch {
+                  // Keep default timezone if lookup fails
+                }
+              }
 
               send("step", {
                 task: "places",

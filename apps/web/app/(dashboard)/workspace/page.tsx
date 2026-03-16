@@ -175,14 +175,12 @@ export default function WorkspacePage() {
       <CreateAgentModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
-        onCreated={(agent) => {
-          // Refresh the agents list and navigate
+        onCreated={() => {
           fetch("/api/agents")
             .then((r) => r.json())
             .then((data) => {
               if (Array.isArray(data)) setAgents(data);
             });
-          router.push(`/agents/${agent.id}`);
         }}
       />
     </div>

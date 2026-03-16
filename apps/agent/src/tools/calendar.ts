@@ -88,8 +88,8 @@ export const checkAvailabilityTool = new FunctionTool({
     const calendarId = getCalendarId(agent);
     const timezone = agent.timezone || "America/New_York";
 
-    const dateStart = new Date(`${date}T00:00:00`);
-    const dateEnd = new Date(`${date}T23:59:59`);
+    const dateStart = new Date(ensureTimezone(`${date}T00:00:00`, timezone));
+    const dateEnd = new Date(ensureTimezone(`${date}T23:59:59`, timezone));
 
     // Fetch resources for this agent
     const resources = await db.resource.findMany({
@@ -171,7 +171,8 @@ export const checkAvailabilityTool = new FunctionTool({
         dayHours.open,
         dayHours.close,
         busySlots.map((s) => ({ start: s.start!, end: s.end! })),
-        slotDuration
+        slotDuration,
+        timezone
       );
 
       return {
@@ -199,7 +200,8 @@ export const checkAvailabilityTool = new FunctionTool({
       dayHours.open,
       dayHours.close,
       busySlots.map((s) => ({ start: s.start!, end: s.end! })),
-      slotDuration
+      slotDuration,
+      timezone
     );
 
     return {
@@ -220,7 +222,7 @@ export const createBookingTool = new FunctionTool({
   parameters: z.object({
     summary: z
       .string()
-      .describe("Title for the booking, e.g. 'Reservation - John Smith'"),
+      .describe("Title for the booking, formatted as 'Reservation - [caller name]'"),
     startTime: z
       .string()
       .describe("Start time in ISO 8601 format, e.g. 2025-03-15T14:00:00"),
@@ -440,8 +442,8 @@ export const listBookingsTool = new FunctionTool({
     const calendarId = getCalendarId(agent);
     const timezone = agent.timezone || "America/New_York";
 
-    const timeMin = new Date(`${date}T00:00:00`);
-    const timeMax = new Date(`${date}T23:59:59`);
+    const timeMin = new Date(ensureTimezone(`${date}T00:00:00`, timezone));
+    const timeMax = new Date(ensureTimezone(`${date}T23:59:59`, timezone));
 
     const response = await calendar.events.list({
       calendarId,
@@ -562,6 +564,28 @@ function ensureTimezone(dateTime: string, timezone: string): string {
   return dateTime;
 }
 
+/**
+ * Format a Date object as a local datetime string (YYYY-MM-DDTHH:mm:ss)
+ * in the given IANA timezone. This avoids returning UTC ISO strings that
+ * confuse the LLM into passing UTC times to create_booking.
+ */
+function formatDateInTimezone(date: Date, timezone: string): string {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}:${get("second")}`;
+}
+
 interface TimeSlot {
   start: string;
   end: string;
@@ -572,10 +596,15 @@ function computeAvailableSlots(
   openTime: string,
   closeTime: string,
   busySlots: TimeSlot[],
-  slotDurationMinutes: number
+  slotDurationMinutes: number,
+  timezone: string
 ): Array<{ start: string; end: string }> {
-  const open = new Date(`${date}T${openTime}:00`);
-  const close = new Date(`${date}T${closeTime}:00`);
+  // Parse open/close in the business timezone so slots are correct
+  // regardless of the server's local timezone.
+  const openWithTz = ensureTimezone(`${date}T${openTime}:00`, timezone);
+  const closeWithTz = ensureTimezone(`${date}T${closeTime}:00`, timezone);
+  const open = new Date(openWithTz);
+  const close = new Date(closeWithTz);
 
   const busyPeriods = busySlots
     .map((s) => ({
@@ -593,8 +622,8 @@ function computeAvailableSlots(
   for (const busy of busyPeriods) {
     while (cursor + slotMs <= busy.start && cursor + slotMs <= endBoundary) {
       available.push({
-        start: new Date(cursor).toISOString(),
-        end: new Date(cursor + slotMs).toISOString(),
+        start: formatDateInTimezone(new Date(cursor), timezone),
+        end: formatDateInTimezone(new Date(cursor + slotMs), timezone),
       });
       cursor += slotMs;
     }
@@ -605,8 +634,8 @@ function computeAvailableSlots(
 
   while (cursor + slotMs <= endBoundary) {
     available.push({
-      start: new Date(cursor).toISOString(),
-      end: new Date(cursor + slotMs).toISOString(),
+      start: formatDateInTimezone(new Date(cursor), timezone),
+      end: formatDateInTimezone(new Date(cursor + slotMs), timezone),
     });
     cursor += slotMs;
   }

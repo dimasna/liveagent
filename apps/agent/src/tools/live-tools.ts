@@ -42,7 +42,7 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
       properties: {
         summary: {
           type: "string" as any,
-          description: "Title for the booking, e.g. 'Reservation - John Smith'",
+          description: "Title for the booking, formatted as 'Reservation - [caller name]'",
         },
         startTime: {
           type: "string" as any,
