@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "./session";
 
 export class AuthError extends Error {
   constructor(message = "Unauthorized") {
@@ -8,13 +8,13 @@ export class AuthError extends Error {
 }
 
 export async function getAuthUser() {
-  const { userId, orgId } = await auth();
+  const session = await getSession();
 
-  if (!userId || !orgId) {
+  if (!session.isLoggedIn || !session.userId) {
     throw new AuthError();
   }
 
-  return { userId, orgId };
+  return { userId: session.userId, orgId: session.orgId };
 }
 
 export function getErrorStatus(error: unknown): number {
