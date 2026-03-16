@@ -78,7 +78,7 @@ function getCalendarId(agent: Agent): string {
 export const checkAvailabilityTool = new FunctionTool({
   name: "check_availability",
   description:
-    "Check available time slots for a given date on the business calendar. Returns busy periods and suggests open slots.",
+    "Check available time slots for a given date on the business calendar. Returns busy periods, suggests open slots, and shows resource availability (tables, rooms, chairs, etc.).",
   parameters: z.object({
     date: z.string().describe("Date to check in YYYY-MM-DD format"),
   }),
@@ -90,6 +90,11 @@ export const checkAvailabilityTool = new FunctionTool({
 
     const dateStart = new Date(`${date}T00:00:00`);
     const dateEnd = new Date(`${date}T23:59:59`);
+
+    // Fetch resources for this agent
+    const resources = await db.resource.findMany({
+      where: { agentId: agent.id, status: "ACTIVE" },
+    });
 
     const freebusyResponse = await calendar.freebusy.query({
       requestBody: {
@@ -130,6 +135,65 @@ export const checkAvailabilityTool = new FunctionTool({
     }
 
     const slotDuration = agent.bookingDuration || 60;
+
+    // If resources exist, check per-resource availability
+    if (resources.length > 0) {
+      // List events to check resource assignments
+      const eventsResponse = await calendar.events.list({
+        calendarId,
+        timeMin: dateStart.toISOString(),
+        timeMax: dateEnd.toISOString(),
+        timeZone: timezone,
+        singleEvents: true,
+        orderBy: "startTime",
+      });
+
+      const events = eventsResponse.data.items ?? [];
+
+      // Count bookings per resource per slot
+      const resourceBookings: Record<string, Array<{ start: string; end: string }>> = {};
+      for (const resource of resources) {
+        resourceBookings[resource.id] = [];
+      }
+
+      for (const event of events) {
+        const resourceId = event.extendedProperties?.private?.resourceId;
+        if (resourceId && resourceBookings[resourceId]) {
+          resourceBookings[resourceId].push({
+            start: event.start?.dateTime || event.start?.date || "",
+            end: event.end?.dateTime || event.end?.date || "",
+          });
+        }
+      }
+
+      const availableSlots = computeAvailableSlots(
+        date,
+        dayHours.open,
+        dayHours.close,
+        busySlots.map((s) => ({ start: s.start!, end: s.end! })),
+        slotDuration
+      );
+
+      return {
+        date,
+        timezone,
+        operatingHours: dayHours,
+        totalResources: resources.length,
+        resourceType: resources[0]?.type || "slot",
+        busySlots: busySlots.map((s) => ({ start: s.start, end: s.end })),
+        availableSlots,
+        slotDurationMinutes: slotDuration,
+        resources: resources.map((r) => ({
+          id: r.id,
+          name: r.name,
+          type: r.type,
+          capacity: r.capacity,
+          bookingsToday: resourceBookings[r.id]?.length || 0,
+        })),
+      };
+    }
+
+    // Fallback: no resources, just time-based availability
     const availableSlots = computeAvailableSlots(
       date,
       dayHours.open,
@@ -151,7 +215,8 @@ export const checkAvailabilityTool = new FunctionTool({
 
 export const createBookingTool = new FunctionTool({
   name: "create_booking",
-  description: "Create a new booking/reservation on the business calendar.",
+  description:
+    "Create a new booking/reservation on the business calendar. If resources (tables, rooms, chairs) are available, automatically assigns one. You can optionally specify a resourceId to book a specific resource.",
   parameters: z.object({
     summary: z
       .string()
@@ -170,22 +235,103 @@ export const createBookingTool = new FunctionTool({
       .string()
       .optional()
       .describe("Additional notes or details about the booking"),
+    resourceId: z
+      .string()
+      .optional()
+      .describe(
+        "ID of a specific resource to book (table, room, etc.). If not provided, an available resource will be auto-assigned."
+      ),
+    callerPhone: z
+      .string()
+      .optional()
+      .describe("Phone number of the caller"),
   }),
-  execute: async ({ summary, startTime, endTime, attendeeEmail, description }) => {
+  execute: async ({
+    summary,
+    startTime,
+    endTime,
+    attendeeEmail,
+    description,
+    resourceId,
+    callerPhone,
+  }) => {
     const agent = getActiveAgent();
     const calendar = getCalendar(agent);
     const calendarId = getCalendarId(agent);
     const timezone = agent.timezone || "America/New_York";
+    const safeStart = ensureTimezone(startTime, timezone);
+    const safeEnd = ensureTimezone(endTime, timezone);
+
+    // Try to assign a resource if not specified
+    let assignedResource: { id: string; name: string } | null = null;
+
+    const resources = await db.resource.findMany({
+      where: { agentId: agent.id, status: "ACTIVE" },
+    });
+
+    if (resources.length > 0) {
+      if (resourceId) {
+        // Use the specified resource
+        const r = resources.find((res) => res.id === resourceId);
+        if (r) {
+          assignedResource = { id: r.id, name: r.name };
+        }
+      } else {
+        // Auto-assign: find a resource not booked during this time slot
+        const eventsResponse = await calendar.events.list({
+          calendarId,
+          timeMin: safeStart,
+          timeMax: safeEnd,
+          timeZone: timezone,
+          singleEvents: true,
+        });
+
+        const bookedResourceIds = new Set(
+          (eventsResponse.data.items ?? [])
+            .map((e) => e.extendedProperties?.private?.resourceId)
+            .filter(Boolean)
+        );
+
+        const availableResource = resources.find(
+          (r) => !bookedResourceIds.has(r.id)
+        );
+
+        if (availableResource) {
+          assignedResource = {
+            id: availableResource.id,
+            name: availableResource.name,
+          };
+        }
+      }
+    }
+
+    // Build event summary with resource name
+    const eventSummary = assignedResource
+      ? `${assignedResource.name} - ${summary}`
+      : summary;
 
     const event: calendar_v3.Schema$Event = {
-      summary,
+      summary: eventSummary,
       description,
-      start: { dateTime: startTime, timeZone: timezone },
-      end: { dateTime: endTime, timeZone: timezone },
+      start: { dateTime: safeStart, timeZone: timezone },
+      end: { dateTime: safeEnd, timeZone: timezone },
     };
 
     if (attendeeEmail) {
       event.attendees = [{ email: attendeeEmail }];
+    }
+
+    // Store resource and caller info in extended properties
+    if (assignedResource || callerPhone) {
+      event.extendedProperties = {
+        private: {
+          ...(assignedResource && {
+            resourceId: assignedResource.id,
+            resourceName: assignedResource.name,
+          }),
+          ...(callerPhone && { callerPhone }),
+        },
+      };
     }
 
     const response = await calendar.events.insert({
@@ -200,7 +346,10 @@ export const createBookingTool = new FunctionTool({
       start: response.data.start?.dateTime,
       end: response.data.end?.dateTime,
       htmlLink: response.data.htmlLink,
-      message: `Booking created successfully for ${summary}`,
+      resourceName: assignedResource?.name || null,
+      message: assignedResource
+        ? `Booking created: ${assignedResource.name} assigned for ${summary}`
+        : `Booking created successfully for ${summary}`,
     };
   },
 });
@@ -224,12 +373,15 @@ export const rescheduleBookingTool = new FunctionTool({
     const calendarId = getCalendarId(agent);
     const timezone = agent.timezone || "America/New_York";
 
+    const safeStart = ensureTimezone(newStartTime, timezone);
+    const safeEnd = ensureTimezone(newEndTime, timezone);
+
     const response = await calendar.events.patch({
       calendarId,
       eventId,
       requestBody: {
-        start: { dateTime: newStartTime, timeZone: timezone },
-        end: { dateTime: newEndTime, timeZone: timezone },
+        start: { dateTime: safeStart, timeZone: timezone },
+        end: { dateTime: safeEnd, timeZone: timezone },
       },
       sendUpdates: "all",
     });
@@ -314,12 +466,63 @@ export const listBookingsTool = new FunctionTool({
 });
 
 // ---------------------------------------------------------------------------
+// Send calendar invite — patches an existing event to add attendee email
+// ---------------------------------------------------------------------------
+
+export const sendCalendarInviteTool = new FunctionTool({
+  name: "send_calendar_invite",
+  description:
+    "Send a Google Calendar invite to the caller's email for an existing booking. Use this AFTER create_booking to deliver the calendar event to their inbox.",
+  parameters: z.object({
+    eventId: z
+      .string()
+      .describe("The Google Calendar event ID returned from create_booking"),
+    email: z
+      .string()
+      .describe("The caller's email address to send the invite to"),
+  }),
+  execute: async ({ eventId, email }) => {
+    const agent = getActiveAgent();
+    const calendar = getCalendar(agent);
+    const calendarId = getCalendarId(agent);
+
+    // Patch the existing event to add the attendee
+    const existing = await calendar.events.get({ calendarId, eventId });
+    const currentAttendees = existing.data.attendees || [];
+
+    // Don't add duplicate
+    if (currentAttendees.some((a) => a.email === email)) {
+      return {
+        success: true,
+        message: `Calendar invite already sent to ${email}`,
+      };
+    }
+
+    await calendar.events.patch({
+      calendarId,
+      eventId,
+      requestBody: {
+        attendees: [...currentAttendees, { email }],
+      },
+      sendUpdates: "all",
+    });
+
+    return {
+      success: true,
+      email,
+      message: `Calendar invite sent to ${email}`,
+    };
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Export all tools as array
 // ---------------------------------------------------------------------------
 
 export const calendarTools = [
   checkAvailabilityTool,
   createBookingTool,
+  sendCalendarInviteTool,
   rescheduleBookingTool,
   cancelBookingTool,
   listBookingsTool,
@@ -328,6 +531,36 @@ export const calendarTools = [
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Ensure a datetime string has a timezone offset.
+ * Gemini often returns "2026-03-15T17:00:00" without offset,
+ * which causes Google Calendar API to reject with 400 Bad Request.
+ */
+function ensureTimezone(dateTime: string, timezone: string): string {
+  // Already has offset (e.g. +05:30, -08:00, Z)
+  if (/[+-]\d{2}:\d{2}$/.test(dateTime) || dateTime.endsWith("Z")) {
+    return dateTime;
+  }
+  // Construct a Date in the given timezone to get the correct offset
+  try {
+    const dt = new Date(dateTime);
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      timeZoneName: "longOffset",
+    });
+    const parts = formatter.formatToParts(dt);
+    const tzPart = parts.find((p) => p.type === "timeZoneName");
+    // tzPart.value is like "GMT+07:00" or "GMT-05:00"
+    const offset = tzPart?.value?.replace("GMT", "") || "";
+    if (offset) {
+      return `${dateTime}${offset}`;
+    }
+  } catch {
+    // fallback
+  }
+  return dateTime;
+}
 
 interface TimeSlot {
   start: string;

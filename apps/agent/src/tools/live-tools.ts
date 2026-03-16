@@ -10,6 +10,7 @@ import type { FunctionDeclaration } from "@google/genai";
 import {
   checkAvailabilityTool,
   createBookingTool,
+  sendCalendarInviteTool,
   rescheduleBookingTool,
   cancelBookingTool,
   listBookingsTool,
@@ -23,7 +24,7 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
   {
     name: "check_availability",
     description:
-      "Check available time slots for a given date on the business calendar. Returns busy periods and suggests open slots.",
+      "Check available time slots for a given date on the business calendar. Returns busy periods, suggests open slots, and shows resource availability (tables, rooms, chairs, etc.).",
     parameters: {
       type: "object" as any,
       properties: {
@@ -34,7 +35,8 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
   },
   {
     name: "create_booking",
-    description: "Create a new booking/reservation on the business calendar.",
+    description:
+      "Create a new booking/reservation on the business calendar. Automatically assigns an available resource (table, room, chair) if resources exist.",
     parameters: {
       type: "object" as any,
       properties: {
@@ -58,8 +60,36 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
           type: "string" as any,
           description: "Additional notes or details about the booking",
         },
+        resourceId: {
+          type: "string" as any,
+          description:
+            "ID of a specific resource to book. If not provided, an available resource will be auto-assigned.",
+        },
+        callerPhone: {
+          type: "string" as any,
+          description: "Phone number of the caller",
+        },
       },
       required: ["summary", "startTime", "endTime"],
+    },
+  },
+  {
+    name: "send_calendar_invite",
+    description:
+      "Send a Google Calendar invite to the caller's email for an existing booking. Use this AFTER create_booking to deliver the calendar event to their inbox.",
+    parameters: {
+      type: "object" as any,
+      properties: {
+        eventId: {
+          type: "string" as any,
+          description: "The Google Calendar event ID returned from create_booking",
+        },
+        email: {
+          type: "string" as any,
+          description: "The caller's email address to send the invite to",
+        },
+      },
+      required: ["eventId", "email"],
     },
   },
   {
@@ -114,6 +144,15 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
       required: ["date"],
     },
   },
+  {
+    name: "end_call",
+    description:
+      "End the phone call. Use this after saying goodbye to the caller. The call will be terminated immediately.",
+    parameters: {
+      type: "object" as any,
+      properties: {},
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -124,6 +163,7 @@ export const calendarToolDeclarations: FunctionDeclaration[] = [
 const toolMap: Record<string, typeof checkAvailabilityTool> = {
   check_availability: checkAvailabilityTool,
   create_booking: createBookingTool,
+  send_calendar_invite: sendCalendarInviteTool,
   reschedule_booking: rescheduleBookingTool,
   cancel_booking: cancelBookingTool,
   list_bookings: listBookingsTool,

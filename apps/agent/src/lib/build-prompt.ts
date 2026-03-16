@@ -8,12 +8,17 @@ import { VOICE_AGENT_PROMPT } from "@liveagent/shared";
 export function buildSystemPrompt(agent: Agent): string {
   const operatingHours = formatOperatingHours(agent.operatingHours);
 
+  const resourceType = agent.capacityType || "slot";
+  const resourceCount = agent.capacityCount || 0;
+
   const prompt = VOICE_AGENT_PROMPT.replace("{businessName}", agent.businessName || "the business")
     .replace("{businessType}", agent.businessType || "business")
     .replace("{timezone}", agent.timezone || "America/New_York")
     .replace("{operatingHours}", operatingHours)
     .replace("{maxAdvanceDays}", String(agent.maxAdvanceDays ?? 30))
-    .replace("{bookingDuration}", String(agent.bookingDuration ?? 60));
+    .replace("{bookingDuration}", String(agent.bookingDuration ?? 60))
+    .replace(/\{resourceCount\}/g, String(resourceCount))
+    .replace(/\{resourceType\}/g, resourceType);
 
   // Append any custom instructions the business has configured
   const customInstruction = agent.instruction?.trim();

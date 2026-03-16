@@ -97,6 +97,8 @@ async function handleVoiceWs(
     return;
   }
 
+  log.info({ agentId, voice: agent.voice, model: agent.model }, "Agent loaded from DB");
+
   if (agent.status !== "ACTIVE") {
     socket.send(JSON.stringify({ type: "error", message: "Agent is not active" }));
     socket.close(4009, "Agent not active");

@@ -3,6 +3,7 @@ export {
   setActiveAgent,
   checkAvailabilityTool,
   createBookingTool,
+  sendCalendarInviteTool,
   rescheduleBookingTool,
   cancelBookingTool,
   listBookingsTool,

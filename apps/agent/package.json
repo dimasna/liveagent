@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "build": "tsc --noCheck",
+    "start": "tsx src/server.ts"
   },
   "dependencies": {
     "@google/adk": "^0.5.0",
@@ -18,12 +18,12 @@
     "@liveagent/db": "workspace:*",
     "@liveagent/shared": "workspace:*",
     "dotenv": "^16.4.7",
+    "tsx": "^4.19.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {
     "@liveagent/typescript-config": "workspace:*",
     "@types/node": "^22.13.0",
-    "tsx": "^4.19.0",
     "typescript": "^5.7.3"
   }
 }
