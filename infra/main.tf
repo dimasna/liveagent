@@ -494,6 +494,8 @@ resource "google_cloud_run_v2_service_iam_member" "widget_public" {
 }
 
 # ---------- Domain Mappings (optional, requires verified domain) ----------
+# These use create_before_destroy + ignore metadata changes to prevent
+# terraform from destroying and recreating them (which resets SSL certs).
 resource "google_cloud_run_domain_mapping" "web" {
   count    = var.domain != "" ? 1 : 0
   name     = var.domain
@@ -505,6 +507,10 @@ resource "google_cloud_run_domain_mapping" "web" {
 
   spec {
     route_name = google_cloud_run_v2_service.web.name
+  }
+
+  lifecycle {
+    ignore_changes = [metadata]
   }
 
   depends_on = [google_cloud_run_v2_service.web]
@@ -523,6 +529,10 @@ resource "google_cloud_run_domain_mapping" "agent" {
     route_name = google_cloud_run_v2_service.agent.name
   }
 
+  lifecycle {
+    ignore_changes = [metadata]
+  }
+
   depends_on = [google_cloud_run_v2_service.agent]
 }
 
@@ -537,6 +547,10 @@ resource "google_cloud_run_domain_mapping" "widget" {
 
   spec {
     route_name = google_cloud_run_v2_service.widget.name
+  }
+
+  lifecycle {
+    ignore_changes = [metadata]
   }
 
   depends_on = [google_cloud_run_v2_service.widget]
