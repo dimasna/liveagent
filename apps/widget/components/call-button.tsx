@@ -18,7 +18,7 @@ interface CallButtonProps {
 export function CallButton({
   state,
   onClick,
-  color = "#3b82f6",
+  color = "#0a0a0a",
 }: CallButtonProps) {
   const isActive = state === "connected";
   const isConnecting = state === "connecting";

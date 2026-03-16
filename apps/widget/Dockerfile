@@ -8,19 +8,18 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
 COPY apps/widget/package.json ./apps/widget/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
 RUN pnpm install --frozen-lockfile
 
 # Build
-FROM base AS builder
+FROM deps AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/widget/node_modules ./apps/widget/node_modules
-COPY --from=deps /app/packages/ ./packages/
-COPY . .
+COPY packages/ ./packages/
+COPY apps/widget/ ./apps/widget/
 RUN pnpm --filter @liveagent/widget build
 
 # Run
-FROM base AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && \

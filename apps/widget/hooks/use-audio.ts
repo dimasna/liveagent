@@ -15,7 +15,7 @@ interface UseAudioReturn {
 
 /**
  * Custom hook for microphone capture (PCM 16kHz 16-bit mono)
- * and audio playback of agent responses.
+ * and audio playback of agent responses (PCM 24kHz from Gemini).
  */
 export function useAudio(): UseAudioReturn {
   const [isMuted, setIsMuted] = useState(false);
@@ -33,6 +33,78 @@ export function useAudio(): UseAudioReturn {
 
   const isMutedRef = useRef(false);
   const onAudioDataRef = useRef<((base64: string) => void) | null>(null);
+
+  // --- Playback helpers (defined first so startCapture can reference them) ---
+
+  const ensurePlaybackContext = useCallback(() => {
+    if (!playbackContextRef.current) {
+      playbackContextRef.current = new AudioContext({
+        sampleRate: AUDIO_CONFIG.playbackSampleRate,
+      });
+    }
+    const ctx = playbackContextRef.current;
+    // Resume suspended context (browser autoplay policy)
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    return ctx;
+  }, []);
+
+  const playNextInQueue = useCallback(() => {
+    const ctx = playbackContextRef.current;
+    if (!ctx || playbackQueueRef.current.length === 0) {
+      isPlayingRef.current = false;
+      currentSourceRef.current = null;
+      return;
+    }
+
+    isPlayingRef.current = true;
+    const buffer = playbackQueueRef.current.shift()!;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    currentSourceRef.current = source;
+
+    source.onended = () => {
+      playNextInQueue();
+    };
+
+    source.start();
+  }, []);
+
+  const playAudio = useCallback((base64: string) => {
+    const ctx = ensurePlaybackContext();
+    const pcm16 = base64ToPcm16(base64);
+    const float32 = pcm16ToFloat32(pcm16);
+
+    const buffer = ctx.createBuffer(
+      1,
+      float32.length,
+      AUDIO_CONFIG.playbackSampleRate,
+    );
+    buffer.getChannelData(0).set(float32);
+
+    playbackQueueRef.current.push(buffer);
+
+    if (!isPlayingRef.current) {
+      playNextInQueue();
+    }
+  }, [ensurePlaybackContext, playNextInQueue]);
+
+  const stopPlayback = useCallback(() => {
+    playbackQueueRef.current = [];
+    if (currentSourceRef.current) {
+      try {
+        currentSourceRef.current.stop();
+      } catch {
+        // Already stopped
+      }
+      currentSourceRef.current = null;
+    }
+    isPlayingRef.current = false;
+  }, []);
+
+  // --- Capture ---
 
   const startCapture = useCallback(
     async (onAudioData: (base64: string) => void) => {
@@ -55,9 +127,6 @@ export function useAudio(): UseAudioReturn {
         });
         audioContextRef.current = audioContext;
 
-        // Use ScriptProcessorNode as a fallback-compatible approach.
-        // AudioWorklet is preferred in production but requires serving
-        // a separate worklet file. ScriptProcessorNode works inline.
         const source = audioContext.createMediaStreamSource(stream);
         sourceNodeRef.current = source;
 
@@ -73,7 +142,7 @@ export function useAudio(): UseAudioReturn {
 
           const inputData = event.inputBuffer.getChannelData(0);
           const pcm16 = float32ToPcm16(inputData);
-          const base64 = arrayBufferToBase64(pcm16.buffer);
+          const base64 = arrayBufferToBase64(pcm16.buffer as ArrayBuffer);
 
           onAudioDataRef.current?.(base64);
         };
@@ -81,13 +150,16 @@ export function useAudio(): UseAudioReturn {
         source.connect(scriptNode);
         scriptNode.connect(audioContext.destination);
 
+        // Pre-create playback context during user gesture so it starts "running"
+        ensurePlaybackContext();
+
         setIsCapturing(true);
       } catch (err) {
         console.error("Failed to start audio capture:", err);
         throw err;
       }
     },
-    [],
+    [ensurePlaybackContext],
   );
 
   const stopCapture = useCallback(() => {
@@ -113,66 +185,6 @@ export function useAudio(): UseAudioReturn {
 
     onAudioDataRef.current = null;
     setIsCapturing(false);
-  }, []);
-
-  const playAudio = useCallback((base64: string) => {
-    if (!playbackContextRef.current) {
-      playbackContextRef.current = new AudioContext({
-        sampleRate: AUDIO_CONFIG.sampleRate,
-      });
-    }
-
-    const ctx = playbackContextRef.current;
-    const pcm16 = base64ToPcm16(base64);
-    const float32 = pcm16ToFloat32(pcm16);
-
-    const buffer = ctx.createBuffer(
-      1,
-      float32.length,
-      AUDIO_CONFIG.sampleRate,
-    );
-    buffer.getChannelData(0).set(float32);
-
-    playbackQueueRef.current.push(buffer);
-
-    if (!isPlayingRef.current) {
-      playNextInQueue();
-    }
-  }, []);
-
-  const playNextInQueue = useCallback(() => {
-    const ctx = playbackContextRef.current;
-    if (!ctx || playbackQueueRef.current.length === 0) {
-      isPlayingRef.current = false;
-      currentSourceRef.current = null;
-      return;
-    }
-
-    isPlayingRef.current = true;
-    const buffer = playbackQueueRef.current.shift()!;
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    currentSourceRef.current = source;
-
-    source.onended = () => {
-      playNextInQueue();
-    };
-
-    source.start();
-  }, []);
-
-  const stopPlayback = useCallback(() => {
-    playbackQueueRef.current = [];
-    if (currentSourceRef.current) {
-      try {
-        currentSourceRef.current.stop();
-      } catch {
-        // Already stopped
-      }
-      currentSourceRef.current = null;
-    }
-    isPlayingRef.current = false;
   }, []);
 
   const toggleMute = useCallback(() => {

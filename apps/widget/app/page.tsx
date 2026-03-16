@@ -13,7 +13,7 @@ export default function WidgetPreviewPage() {
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          LiveAgent Voice Widget Preview
+          Liveagent.dev Voice Widget Preview
         </h1>
         <p className="text-gray-600 mb-6">
           This page is for testing the voice widget during development.
@@ -37,7 +37,7 @@ export default function WidgetPreviewPage() {
           <h2 className="text-lg font-semibold mb-3">Embed Code</h2>
           <pre className="bg-gray-900 text-green-400 p-4 rounded-md text-sm overflow-x-auto">
             {`<script
-  src="${typeof window !== "undefined" ? window.location.origin : "https://widget.liveagent.com"}/widget.js"
+  src="${typeof window !== "undefined" ? window.location.origin : "https://widget.liveagent.dev"}/widget.js"
   data-agent-id="${agentId}"
   data-position="bottom-right"
   data-color="#3b82f6"

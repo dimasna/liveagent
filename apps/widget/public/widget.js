@@ -1,29 +1,35 @@
-"use strict";(()=>{(function(){let u='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',w='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',a=null,e=null,t=null,s=!1,r=document.currentScript,m=r?r.src.replace(/\/widget\.js(\?.*)?$/,""):window.location.origin,l=null,d="bottom-right",i="#3b82f6";if(r)l=r.getAttribute("data-agent-id"),d=r.getAttribute("data-position")||"bottom-right",i=r.getAttribute("data-color")||i;else{let n=document.querySelectorAll('script[src*="widget.js"]'),o=Array.from(n).find(c=>c.hasAttribute("data-agent-id"));o&&(l=o.getAttribute("data-agent-id"),d=o.getAttribute("data-position")||"bottom-right",i=o.getAttribute("data-color")||i)}if(!l){console.error("LiveAgent Widget: data-agent-id attribute is required on the script tag.");return}function p(){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",h):h()}function h(){let n=document.createElement("style");n.textContent=`
-      @keyframes liveagent-btn-pulse {
-        0%, 100% { box-shadow: 0 0 0 0 ${i}66; }
-        50% { box-shadow: 0 0 0 10px ${i}00; }
-      }
-    `,document.head.appendChild(n),t=document.createElement("button"),t.id="liveagent-widget-button",t.innerHTML=u,t.style.cssText=`
+"use strict";(()=>{(function(){let h=`<svg width="22" height="22" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+    <rect x="6.5" y="11" width="2.5" height="6" rx="1.25" fill="#0a0a0a" opacity="0.35"/>
+    <rect x="10.5" y="8.5" width="2.5" height="11" rx="1.25" fill="#0a0a0a" opacity="0.55"/>
+    <rect x="14.5" y="6" width="2.5" height="16" rx="1.25" fill="#0a0a0a"/>
+    <rect x="18.5" y="9" width="2.5" height="10" rx="1.25" fill="#0a0a0a" opacity="0.55"/>
+    <rect x="22.5" y="11.5" width="2.5" height="5" rx="1.25" fill="#0a0a0a" opacity="0.35"/>
+  </svg>`,k='<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',o=null,i=null,t=null,g=!1,a=document.currentScript;if(!a){let e=document.querySelectorAll('script[src*="widget.js"]');a=Array.from(e).find(n=>n.hasAttribute("data-agent-id"))}let p=a?a.src.replace(/\/widget\.js(\?.*)?$/,""):window.location.origin,s=null,l="bottom-right",r="#0a0a0a",d="#0a0a0a",c="Booking/Reservation Agent",x=!1;function A(e){s=e.getAttribute("data-agent-id"),l=e.getAttribute("data-position")||"bottom-right",r=e.getAttribute("data-color")||r,d=e.getAttribute("data-bg")||d,c=e.getAttribute("data-label")||c,x=e.getAttribute("data-open")==="true"}if(a&&A(a),!s){console.error("Liveagent.dev Widget: data-agent-id attribute is required on the script tag.");return}let E=a?.getAttribute("data-api-url")||p.replace(/:\d+$/,":3005");async function y(){try{let e=await fetch(`${E}/api/agents/${s}/widget-config`);if(!e.ok)return;let n=await e.json();!a?.getAttribute("data-color")&&n.widgetColor&&(r=n.widgetColor),!a?.getAttribute("data-bg")&&n.widgetBgColor&&(d=n.widgetBgColor),!a?.getAttribute("data-label")&&n.name&&(c=n.name),n.widgetPosition&&(l=n.widgetPosition)}catch{}}function m(){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>{y().then(b)}):y().then(b)}function b(){t=document.createElement("button"),t.id="liveagent-widget-button",t.innerHTML=`
+      <span style="display:flex;align-items:center;gap:10px;">
+        <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;">${h}</span>
+        <span style="font-size:14px;font-weight:500;white-space:nowrap;">${c}</span>
+      </span>
+    `,t.style.cssText=`
       position: fixed;
-      ${d==="bottom-right"?"right: 20px;":"left: 20px;"}
+      ${l==="bottom-right"?"right: 20px;":"left: 20px;"}
       bottom: 20px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: ${i};
-      color: white;
-      border: none;
+      height: 48px;
+      padding: 0 20px 0 10px;
+      border-radius: 9999px;
+      background: #f5f5f4;
+      color: #1a1a1a;
+      border: 1px solid rgba(0,0,0,0.06);
       cursor: pointer;
       z-index: 999999;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 24px ${i}40;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
       transition: all 0.2s ease;
-      animation: liveagent-btn-pulse 2.5s ease-in-out infinite;
-    `,t.addEventListener("click",v),t.addEventListener("mouseenter",()=>{t&&(t.style.transform="scale(1.08)")}),t.addEventListener("mouseleave",()=>{t&&(t.style.transform="scale(1)")}),document.body.appendChild(t),e=document.createElement("div"),e.id="liveagent-widget-container",e.style.cssText=`
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    `,t.addEventListener("click",T),t.addEventListener("mouseenter",()=>{t&&(t.style.transform="scale(1.03)",t.style.boxShadow="0 4px 20px rgba(0,0,0,0.12)")}),t.addEventListener("mouseleave",()=>{t&&(t.style.transform="scale(1)",t.style.boxShadow="0 2px 12px rgba(0,0,0,0.08)")}),document.body.appendChild(t),i=document.createElement("div"),i.id="liveagent-widget-container",i.style.cssText=`
       position: fixed;
-      ${d==="bottom-right"?"right: 20px;":"left: 20px;"}
+      ${l==="bottom-right"?"right: 20px;":"left: 20px;"}
       bottom: 90px;
       width: 380px;
       height: 580px;
@@ -37,9 +43,14 @@
       opacity: 0;
       transform: translateY(12px) scale(0.96);
       transition: opacity 0.25s ease, transform 0.25s ease;
-    `,a=document.createElement("iframe"),a.src=x(),a.style.cssText=`
+    `,o=document.createElement("iframe"),o.src=S(),o.style.cssText=`
       width: 100%;
       height: 100%;
       border: none;
-      background: white;
-    `,a.allow="microphone; clipboard-read; clipboard-write",e.appendChild(a),document.body.appendChild(e),window.addEventListener("message",b)}function x(){let n=new URLSearchParams;i!=="#3b82f6"&&n.set("color",i);let o=n.toString();return`${m}/${l}${o?"?"+o:""}`}function b(n){if(n.origin!==new URL(m).origin)return;let{type:o,payload:c}=n.data||{};switch(o){case"liveagent:close":g();break;case"liveagent:resize":c?.height&&e&&(e.style.height=`${c.height}px`);break;case"liveagent:call-started":t&&(t.style.animation="none",t.style.background="#22c55e");break;case"liveagent:call-ended":t&&!s&&(t.style.animation="liveagent-btn-pulse 2.5s ease-in-out infinite",t.style.background=i);break}}function v(){s?g():f()}function f(){e&&t&&(s=!0,e.style.display="block",requestAnimationFrame(()=>{requestAnimationFrame(()=>{e&&(e.style.opacity="1",e.style.transform="translateY(0) scale(1)")})}),t.innerHTML=w,t.style.animation="none",t.style.background="#6b7280")}function g(){e&&t&&(s=!1,e.style.opacity="0",e.style.transform="translateY(12px) scale(0.96)",setTimeout(()=>{e&&(e.style.display="none")},250),t.innerHTML=u,t.style.background=i,t.style.animation="liveagent-btn-pulse 2.5s ease-in-out infinite")}function y(){window.removeEventListener("message",b),e&&(e.remove(),e=null,a=null),t&&(t.remove(),t=null),s=!1}window.LiveAgentWidget={show:f,hide:g,destroy:y,init(n){y(),n.agentId&&(l=n.agentId),n.position&&(d=n.position),n.color&&(i=n.color),p()}},p()})();})();
+      background: #0a0a0a;
+    `,o.allow="microphone; clipboard-read; clipboard-write",i.appendChild(o),document.body.appendChild(i),window.addEventListener("message",w),x&&f()}function S(){let e=new URLSearchParams;r!=="#0a0a0a"&&e.set("color",r),d!=="#0a0a0a"&&e.set("bg",d);let n=e.toString();return`${p}/${s}${n?"?"+n:""}`}function w(e){if(e.origin!==new URL(p).origin)return;let{type:n,payload:L}=e.data||{};switch(n){case"liveagent:close":u();break;case"liveagent:resize":L?.height&&i&&(i.style.height=`${L.height}px`);break;case"liveagent:call-started":break;case"liveagent:call-ended":break}}function T(){g?u():f()}function M(){t&&(t.innerHTML=k,t.style.background="#6b7280",t.style.color="white",t.style.padding="0",t.style.width="48px",t.style.borderRadius="50%",t.style.border="none")}function $(){t&&(t.innerHTML=`
+      <span style="display:flex;align-items:center;gap:10px;">
+        <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0;">${h}</span>
+        <span style="font-size:14px;font-weight:500;white-space:nowrap;">${c}</span>
+      </span>
+    `,t.style.background="#f5f5f4",t.style.color="#1a1a1a",t.style.padding="0 20px 0 10px",t.style.width="auto",t.style.borderRadius="9999px",t.style.border="1px solid rgba(0,0,0,0.06)")}function f(){i&&t&&(g=!0,i.style.display="block",requestAnimationFrame(()=>{requestAnimationFrame(()=>{i&&(i.style.opacity="1",i.style.transform="translateY(0) scale(1)")})}),M())}function u(){i&&t&&(g=!1,i.style.opacity="0",i.style.transform="translateY(12px) scale(0.96)",setTimeout(()=>{i&&(i.style.display="none")},250),$())}function v(){window.removeEventListener("message",w),i&&(i.remove(),i=null,o=null),t&&(t.remove(),t=null),g=!1}window.LiveAgentWidget={show:f,hide:u,destroy:v,init(e){v(),e.agentId&&(s=e.agentId),e.position&&(l=e.position),e.color&&(r=e.color),m()}},m()})();})();

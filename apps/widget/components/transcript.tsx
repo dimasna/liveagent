@@ -23,7 +23,7 @@ export function Transcript({ entries }: TranscriptProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm px-4">
+      <div className="flex-1 flex items-center justify-center text-[#7a7a7d] text-sm px-4">
         <p className="text-center">
           Your conversation will appear here once the call starts.
         </p>
@@ -48,8 +48,8 @@ export function Transcript({ entries }: TranscriptProps) {
               max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed
               ${
                 entry.role === "user"
-                  ? "bg-blue-500 text-white rounded-br-md"
-                  : "bg-gray-100 text-gray-800 rounded-bl-md"
+                  ? "bg-white text-[#0a0a0a] rounded-br-md"
+                  : "bg-[#1c1c1e] text-[#ededef] rounded-bl-md"
               }
               ${!entry.isFinal ? "opacity-60" : ""}
             `}

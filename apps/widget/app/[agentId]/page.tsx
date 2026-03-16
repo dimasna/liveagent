@@ -1,7 +1,6 @@
-"use client";
-
-import { use } from "react";
 import { VoiceWidget } from "@/components/voice-widget";
+
+const WEB_APP_URL = process.env.NEXT_PUBLIC_WEB_APP_URL || "http://localhost:3005";
 
 interface Props {
   params: Promise<{
@@ -9,27 +8,49 @@ interface Props {
   }>;
   searchParams: Promise<{
     color?: string;
+    bg?: string;
     greeting?: string;
   }>;
 }
 
+async function getAgentConfig(agentId: string) {
+  try {
+    const res = await fetch(
+      `${WEB_APP_URL}/api/agents/${agentId}/widget-config`,
+      { next: { revalidate: 60 } },
+    );
+    if (!res.ok) return null;
+    return res.json() as Promise<{
+      name: string;
+      widgetColor: string;
+      widgetBgColor: string;
+      widgetPosition: string;
+      greeting: string;
+    }>;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Widget page rendered inside the iframe.
- * URL pattern: /{agentId}?color=#3b82f6&greeting=Hello
+ * URL pattern: /{agentId}?color=#0a0a0a&bg=#0a0a0a&greeting=Hello
  *
- * This page is loaded by the embed script inside an iframe.
- * It renders the full voice widget experience.
+ * Query params override saved agent config.
  */
-export default function WidgetPage({ params, searchParams }: Props) {
-  const { agentId } = use(params);
-  const { color, greeting } = use(searchParams);
+export default async function WidgetPage({ params, searchParams }: Props) {
+  const { agentId } = await params;
+  const { color, bg, greeting } = await searchParams;
+
+  const config = await getAgentConfig(agentId);
 
   return (
     <div className="h-screen w-screen overflow-hidden">
       <VoiceWidget
         agentId={agentId}
-        color={color || undefined}
-        greeting={greeting || undefined}
+        color={color || config?.widgetColor || undefined}
+        bgColor={bg || config?.widgetBgColor || undefined}
+        greeting={greeting || config?.greeting || undefined}
       />
     </div>
   );

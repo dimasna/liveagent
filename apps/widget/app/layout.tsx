@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LiveAgent Voice Widget",
-  description: "Voice booking widget powered by LiveAgent",
+  title: "Liveagent.dev Voice Widget",
+  description: "Voice booking widget powered by Liveagent.dev",
 };
 
 export default function RootLayout({

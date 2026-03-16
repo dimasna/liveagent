@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useAudio } from "./use-audio";
-import { AGENT_WS_URL, WS_MESSAGE_TYPES } from "@/lib/config";
+import { getRuntimeConfig, WS_MESSAGE_TYPES } from "@/lib/config";
 
 export type ConnectionState = "idle" | "connecting" | "connected" | "error";
 
@@ -16,14 +16,17 @@ export interface TranscriptEntry {
 
 export interface BookingConfirmation {
   id: string;
-  service: string;
-  date: string;
-  time: string;
-  customerName: string;
-  customerPhone?: string;
-  customerEmail?: string;
-  notes?: string;
+  summary: string;
+  start: string;
+  end: string;
+  resourceName?: string | null;
+  attendeeEmail?: string | null;
+  callerPhone?: string | null;
+  description?: string | null;
+  htmlLink?: string | null;
 }
+
+export type BookingPhase = "idle" | "confirming" | "confirmed";
 
 interface UseVoiceSessionReturn {
   connect: (agentId: string) => Promise<void>;
@@ -32,6 +35,7 @@ interface UseVoiceSessionReturn {
   state: ConnectionState;
   transcript: TranscriptEntry[];
   bookingConfirmation: BookingConfirmation | null;
+  bookingPhase: BookingPhase;
   isMuted: boolean;
   toggleMute: () => void;
   error: string | null;
@@ -46,6 +50,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [bookingConfirmation, setBookingConfirmation] =
     useState<BookingConfirmation | null>(null);
+  const [bookingPhase, setBookingPhase] = useState<BookingPhase>("idle");
   const [error, setError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -65,9 +70,10 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       setTranscript((prev) => {
         // For interim transcripts, update the last entry of the same role if not final
         if (!isFinal) {
-          const lastIdx = prev.findLastIndex(
-            (e) => e.role === role && !e.isFinal,
-          );
+          let lastIdx = -1;
+          for (let i = prev.length - 1; i >= 0; i--) {
+            if (prev[i]!.role === role && !prev[i]!.isFinal) { lastIdx = i; break; }
+          }
           if (lastIdx >= 0) {
             const updated = [...prev];
             updated[lastIdx] = { ...updated[lastIdx]!, text, isFinal };
@@ -92,6 +98,21 @@ export function useVoiceSession(): UseVoiceSessionReturn {
 
   const handleWsMessage = useCallback(
     (event: MessageEvent) => {
+      // Binary messages (Blob/ArrayBuffer) are audio — play directly
+      if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
+        const blob =
+          event.data instanceof Blob
+            ? event.data
+            : new Blob([event.data]);
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(",")[1];
+          if (base64) playAudio(base64);
+        };
+        reader.readAsDataURL(blob);
+        return;
+      }
+
       try {
         const data = JSON.parse(event.data);
 
@@ -118,13 +139,36 @@ export function useVoiceSession(): UseVoiceSessionReturn {
             addTranscriptEntry("agent", data.text, true);
             break;
 
+          case WS_MESSAGE_TYPES.BOOKING_CONFIRMING:
+            setBookingPhase("confirming");
+            break;
+
           case WS_MESSAGE_TYPES.BOOKING_CONFIRMED:
             setBookingConfirmation(data.booking);
-            addTranscriptEntry(
-              "agent",
-              `Booking confirmed! ${data.booking.service} on ${data.booking.date} at ${data.booking.time}.`,
-              true,
+            setBookingPhase("confirmed");
+            break;
+
+          case WS_MESSAGE_TYPES.INVITE_SENT:
+            // Update booking confirmation with the email
+            setBookingConfirmation((prev) =>
+              prev ? { ...prev, attendeeEmail: data.email } : prev
             );
+            break;
+
+          case WS_MESSAGE_TYPES.INTERRUPTED:
+            // User started speaking — stop agent audio immediately (barge-in)
+            stopPlayback();
+            break;
+
+          case WS_MESSAGE_TYPES.SESSION_ENDED:
+            // Agent ended the call — clean up gracefully
+            stopPlayback();
+            stopCapture();
+            if (wsRef.current) {
+              wsRef.current.close();
+              wsRef.current = null;
+            }
+            setState("idle");
             break;
 
           case WS_MESSAGE_TYPES.ERROR:
@@ -139,7 +183,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
         console.error("Failed to parse WebSocket message:", err);
       }
     },
-    [playAudio, addTranscriptEntry],
+    [playAudio, stopPlayback, stopCapture, addTranscriptEntry],
   );
 
   const connect = useCallback(
@@ -157,7 +201,8 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       sessionIdRef.current = sessionId;
 
       try {
-        const wsUrl = `${AGENT_WS_URL}/ws/voice?agentId=${encodeURIComponent(agentId)}&sessionId=${encodeURIComponent(sessionId)}`;
+        const config = await getRuntimeConfig();
+        const wsUrl = `${config.agentWsUrl}/ws/voice?agentId=${encodeURIComponent(agentId)}&sessionId=${encodeURIComponent(sessionId)}`;
         const ws = new WebSocket(wsUrl);
         wsRef.current = ws;
 
@@ -260,6 +305,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
     state,
     transcript,
     bookingConfirmation,
+    bookingPhase,
     isMuted,
     toggleMute,
     error,
